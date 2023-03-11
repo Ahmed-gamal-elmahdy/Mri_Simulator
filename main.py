@@ -25,6 +25,7 @@ import csv
 import cv2
 import numpy as np
 from gui import Ui_MainWindow
+import helper
 warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
@@ -33,11 +34,20 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         super(ApplicationWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.ui.actionOpen.triggered(lambda :browse())
 
-        x = np.arange(1000)
-        y = np.random.normal(size=(3, 1000))
-        #self.ui.plotwidget_sequance.plotItem
+        def browse():
+            # Open Browse Window & Check
+            fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open img", (QtCore.QDir.homePath()),
+                                                                "png (*.png)")
+            if fileName:
+                # Check extension
+                try:
+                    print(fileName)
 
+
+                except (IOError, SyntaxError):
+                    self.error('Check File Extension')
 
 
 
