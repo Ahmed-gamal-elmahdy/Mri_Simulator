@@ -1,5 +1,11 @@
 import math
 import numpy as np
+import sigpy
+def getPhantom(size):
+    size=int(size)
+    phantom = sigpy.shepp_logan([size, size], dtype=float)
+    phantom = phantom * (255 / np.max(phantom))
+    return phantom
 
 def rotateX(matrix, angle):
     shape = np.shape(matrix)
