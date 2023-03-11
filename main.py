@@ -24,6 +24,7 @@ from math import sin, cos, pi
 import csv
 import cv2
 import numpy as np
+from PIL import Image
 from gui import Ui_MainWindow
 import helper
 warnings.filterwarnings("error")
@@ -34,7 +35,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         super(ApplicationWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.actionOpen.triggered(lambda :browse())
+        self.ui.actionOpen.triggered.connect(lambda :browse())
 
         def browse():
             # Open Browse Window & Check
@@ -43,15 +44,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             if fileName:
                 # Check extension
                 try:
-                    print(fileName)
+                    img = Image.open(fileName)
+                    np_img = np.array(img)
+                    setPhantomImage(np_img)
+
 
 
                 except (IOError, SyntaxError):
                     self.error('Check File Extension')
 
-
-
-
+        def setPhantomImage(input):
+            img = qimage2ndarray.array2qimage(input)
+            self.ui.label_phantom.setPixmap(QPixmap(img))
 
 
 
