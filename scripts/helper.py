@@ -86,11 +86,3 @@ def reconstructImage(img):
     print(np.fft.fft2(kSpace))
 
 
-
-img= [[1,2],
-      [3,4]]
-vectors = np.zeros((2, 2, 3))
-
-#print(np.fft.fft2(img))
-
-reconstructImage(img)
