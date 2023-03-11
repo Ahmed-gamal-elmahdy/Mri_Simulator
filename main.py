@@ -55,6 +55,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         def setPhantomImage(input):
             img = qimage2ndarray.array2qimage(input)
+            print("hi")
             self.ui.label_phantom.setPixmap(QPixmap(img))
 
 
