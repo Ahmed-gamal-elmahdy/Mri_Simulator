@@ -9,7 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from pyqtgraph import PlotWidget
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -231,9 +231,9 @@ class Ui_MainWindow(object):
         self.label_6.setAlignment(QtCore.Qt.AlignCenter)
         self.label_6.setObjectName("label_6")
         self.verticalLayout_8.addWidget(self.label_6)
-        self.widget_sequance = PlotWidget(self.tab_sequance)
-        self.widget_sequance.setObjectName("widget_sequance")
-        self.verticalLayout_8.addWidget(self.widget_sequance)
+        self.plotwidget_sequance = PlotWidget(self.tab_sequance)
+        self.plotwidget_sequance.setObjectName("plotwidget_sequance")
+        self.verticalLayout_8.addWidget(self.plotwidget_sequance)
         self.label_7 = QtWidgets.QLabel(self.tab_sequance)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
@@ -243,9 +243,9 @@ class Ui_MainWindow(object):
         self.label_7.setAlignment(QtCore.Qt.AlignCenter)
         self.label_7.setObjectName("label_7")
         self.verticalLayout_8.addWidget(self.label_7)
-        self.widget_kspace = PlotWidget(self.tab_sequance)
-        self.widget_kspace.setObjectName("widget_kspace")
-        self.verticalLayout_8.addWidget(self.widget_kspace)
+        self.plotwidget_kspace = PlotWidget(self.tab_sequance)
+        self.plotwidget_kspace.setObjectName("plotwidget_kspace")
+        self.verticalLayout_8.addWidget(self.plotwidget_kspace)
         self.btn_start_sequance = QtWidgets.QPushButton(self.tab_sequance)
         self.btn_start_sequance.setText("Start Sequance")
         self.btn_start_sequance.setObjectName("btn_start_sequance")
@@ -255,9 +255,9 @@ class Ui_MainWindow(object):
         self.tab_synth.setObjectName("tab_synth")
         self.verticalLayout_9 = QtWidgets.QVBoxLayout(self.tab_synth)
         self.verticalLayout_9.setObjectName("verticalLayout_9")
-        self.widget_synth = PlotWidget(self.tab_synth)
-        self.widget_synth.setObjectName("widget_synth")
-        self.verticalLayout_9.addWidget(self.widget_synth)
+        self.plotwidget_synth = PlotWidget(self.tab_synth)
+        self.plotwidget_synth.setObjectName("plotwidget_synth")
+        self.verticalLayout_9.addWidget(self.plotwidget_synth)
         self.frame_11 = QtWidgets.QFrame(self.tab_synth)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
@@ -415,7 +415,7 @@ class Ui_MainWindow(object):
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.actionSave_as.setText(_translate("MainWindow", "Save as"))
         self.actionOpen.setText(_translate("MainWindow", "Open"))
-
+from pyqtgraph import PlotWidget
 
 
 if __name__ == "__main__":

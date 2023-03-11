@@ -567,7 +567,7 @@
                </widget>
               </item>
               <item>
-               <widget class="PlotWidget" name="widget_sequance" native="true"/>
+               <widget class="PlotWidget" name="plotwidget_sequance" native="true"/>
               </item>
               <item>
                <widget class="QLabel" name="label_7">
@@ -586,7 +586,7 @@
                </widget>
               </item>
               <item>
-               <widget class="PlotWidget" name="widget_kspace" native="true"/>
+               <widget class="PlotWidget" name="plotwidget_kspace" native="true"/>
               </item>
               <item>
                <widget class="QPushButton" name="btn_start_sequance">
@@ -603,7 +603,7 @@
              </attribute>
              <layout class="QVBoxLayout" name="verticalLayout_9">
               <item>
-               <widget class="PlotWidget" name="widget_synth" native="true"/>
+               <widget class="PlotWidget" name="plotwidget_synth" native="true"/>
               </item>
               <item>
                <widget class="QFrame" name="frame_11">

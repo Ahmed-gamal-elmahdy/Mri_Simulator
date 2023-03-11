@@ -34,6 +34,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        x = np.arange(1000)
+        y = np.random.normal(size=(3, 1000))
+        self.ui.plotwidget_sequance.plotItem
+
+
+
+
+
 
 
 
