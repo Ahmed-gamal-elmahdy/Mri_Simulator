@@ -325,7 +325,23 @@
                     <number>0</number>
                    </property>
                    <item>
-                    <widget class="QComboBox" name="comboBox_size"/>
+                    <widget class="QComboBox" name="comboBox_size">
+                     <item>
+                      <property name="text">
+                       <string>16</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>32</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>64</string>
+                      </property>
+                     </item>
+                    </widget>
                    </item>
                    <item>
                     <widget class="QComboBox" name="comboBox_weights">
@@ -543,11 +559,11 @@
           <item row="0" column="0">
            <widget class="QTabWidget" name="tabWidget">
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_sequance">
              <attribute name="title">
-              <string>Tab 1</string>
+              <string>Sequance</string>
              </attribute>
              <layout class="QVBoxLayout" name="verticalLayout_8">
               <item>
@@ -599,7 +615,7 @@
             </widget>
             <widget class="QWidget" name="tab_synth">
              <attribute name="title">
-              <string>Tab 2</string>
+              <string>Synthesizer</string>
              </attribute>
              <layout class="QVBoxLayout" name="verticalLayout_9">
               <item>

@@ -36,7 +36,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         x = np.arange(1000)
         y = np.random.normal(size=(3, 1000))
-        self.ui.plotwidget_sequance.plotItem
+        #self.ui.plotwidget_sequance.plotItem
 
 
 
