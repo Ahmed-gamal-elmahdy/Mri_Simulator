@@ -26,8 +26,8 @@ import cv2
 import numpy as np
 from PIL import Image
 from gui import Ui_MainWindow
-import helper
-import phantom
+from scripts.helper import *
+from scripts.phantom import *
 
 warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
