@@ -27,6 +27,8 @@ import numpy as np
 from PIL import Image
 from gui import Ui_MainWindow
 import helper
+import phantom
+
 warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
@@ -36,6 +38,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.actionOpen.triggered.connect(lambda :browse())
+
+        # Enable antialiasing for prettier plots
+        pg.setConfigOptions(antialias=True)
+        ## Create image to display
+        v=self.ui.plotwidget_sequance
+        img=sp.shepp_logan([512,512],dtype=np.float_)
+
+
 
         def browse():
             # Open Browse Window & Check
@@ -54,10 +64,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                     self.error('Check File Extension')
 
         def setPhantomImage(input):
+
             img = qimage2ndarray.array2qimage(input)
             print("hi")
             self.ui.label_phantom.setPixmap(QPixmap(img))
 
+        setPhantomImage(img)
 
 
 
