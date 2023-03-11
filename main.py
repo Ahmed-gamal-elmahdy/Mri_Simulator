@@ -24,17 +24,17 @@ from math import sin, cos, pi
 import csv
 import cv2
 import numpy as np
-
+from gui import Ui_MainWindow
 warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
-from gui import Ui_MainWindow
+
 class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(ApplicationWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        
+
 
 
 
