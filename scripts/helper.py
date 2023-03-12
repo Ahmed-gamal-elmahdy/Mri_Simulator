@@ -1,11 +1,19 @@
 import math
 import numpy as np
-import sigpy
+
+from Mri_Simulator.scripts import modifiedPhantom
+
+
 def getPhantom(size):
     size=int(size)
-    phantom = sigpy.shepp_logan([size, size], dtype=float)
+    #phantom = sigpy.shepp_logan([size, size], dtype=float)
+    phantom= modifiedPhantom.modshepp_logan([size, size], dtype=float)
     phantom = phantom * (255 / np.max(phantom))
     return phantom
+
+
+
+
 
 def rotateX(matrix, angle):
     shape = np.shape(matrix)

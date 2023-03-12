@@ -1,4 +1,3 @@
-
 import logging as log
 import os
 import sys
@@ -33,29 +32,56 @@ from scripts.helper import *
 warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
+
 class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(ApplicationWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.actionOpen.triggered.connect(lambda :self.browse())
-        self.ui.comboBox_size.currentIndexChanged.connect(lambda:self.phantomSizeChanged())
+        self.ui.actionOpen.triggered.connect(lambda: self.browse())
+        self.ui.comboBox_size.currentIndexChanged.connect(lambda: self.phantomSizeChanged())
+
+
+        self.ui.comboBox_size.addItems(["256","512"])
 
         # Mouse Events
         self.ui.label_phantom.setMouseTracking(False)
-        self.ui.label_phantom.mouseMoveEvent=self.mousePos
+        self.ui.label_phantom.mouseDoubleClickEvent=self.setColoredPixel
 
         # Enable antialiasing for prettier plots
         pg.setConfigOptions(antialias=True)
+        self.ui.label_phantom.setScaledContents(True)
         ## Create image to display
-        v=self.ui.plotwidget_sequance
+        v = self.ui.plotwidget_sequance
+        self.img = None
 
-
-    def mousePos(self, event):
-
-        #print("x",self.ui.label_phantom.window().x())
-        #print("y", event.globalPos().y())
-
+    def setColoredPixel(self, event):
+        w=self.ui.label_phantom.geometry().width()
+        h=self.ui.label_phantom.geometry().height()
+        self.phantomSize = int(self.ui.comboBox_size.currentText())
+        scaleX=self.phantomSize / w
+        scaleY=self.phantomSize / h
+        self.x = np.floor(event.pos().x() * scaleX)
+        self.y = np.floor(event.pos().y() * scaleY)
+        #self.x = np.floor(x)
+        #self.y = np.floor(y)
+        print(self.x)
+        print(self.y)
+        self.ui.label_phantom.setPixmap(QPixmap(self.img))
+        canvas = QPixmap(self.img)
+        print(canvas.size())
+        paint = QtGui.QPainter()
+        paint.begin(canvas)
+        # set rectangle color and thickness
+        pen = QtGui.QPen(QtCore.Qt.red)
+        pen.setWidthF(0.9)
+        paint.setPen(pen)
+        # draw rectangle on painter
+        rect = QtCore.QRectF(self.x, self.y, 1, 1)
+        paint.drawRect(rect)
+        # set pixmap onto the label widget
+        paint.end()
+        self.ui.label_phantom.setPixmap(canvas)
 
 
     def browse(self):
@@ -69,19 +95,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             except (IOError, SyntaxError):
                 self.error('Check File Extension')
 
-
     def phantomSizeChanged(self):
-        size=self.ui.comboBox_size.currentText()
+        size = self.ui.comboBox_size.currentText()
+        #rebuild phantom with the new size
         self.setPhantomImage(getPhantom(size))
 
-    def setPhantomImage(self,input):
-        #resize img to fill the widget
-        img = cv2.resize(input, (512, 512))
-        img = qimage2ndarray.array2qimage(img)
-        self.ui.label_phantom.setPixmap(QPixmap(img))
-
-
-
+    def setPhantomImage(self, img):
+        # no need to resize set scaled content fill the img
+        # img = cv2.resize(img, (512, 512))
+        self.img = qimage2ndarray.array2qimage(img)
+        self.ui.label_phantom.setPixmap(QPixmap(self.img))
 
 
 def main():
