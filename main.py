@@ -198,6 +198,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
 
 
+
     def updateFA(self):
         x = np.arange(0, 20, 0.1);
         y= np.sinc(x-10)*self.FA +1820
