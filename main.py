@@ -69,10 +69,34 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.TE = 60
         self.FA = 90
 
-
+        self.GRID_OFFSET={
+            "Rf":1820,
+            "Gz":1410,
+            "Gy":1000,
+            "Gx":590,
+        }
         #sequance plot
         self.seq_Data=None
         self.init_plot_seq()
+
+        self.analyzer_ref_line={
+            "RF":None,
+            "Gz":None,
+            "Gy":None,
+            "Gx":None,
+            "Ro":None,
+            "TR":None,
+            "TE":None
+        }
+        self.sequance_ref_line={
+             "RF":None,
+            "Gz":None,
+            "Gy":None,
+            "Gx":None,
+            "Ro":None,
+            "TR":None,
+            "TE":None
+        }
 
 
 
@@ -115,27 +139,22 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
 
 
-
-
-
-
-
     def plot_simple_seq(self):
         # RF
         duration = 20
         x = np.arange(0, duration, 0.1)
-        y = np.sinc(x - 10) * self.FA + 1820
+        y = np.sinc(x - 10) * self.FA + self.GRID_OFFSET["Rf"]
         self.Rf_line.setData(x, y)
         # Gz
         duration = 20
         x = np.array([0, duration, duration, 0, 0])
-        y = np.array([0, 0, 100, 100, 0]) + 1410
+        y = np.array([0, 0, 100, 100, 0]) + self.GRID_OFFSET["Gz"]
         self.Gz_line.setData(x, y)
         # Gx
         duration = 10
         x = np.array([0, duration, duration, 0, 0]) + 20
         x = np.concatenate((x, x))
-        y = np.array([0, 0, 100, 100, 0]) + 1000
+        y = np.array([0, 0, 100, 100, 0]) + self.GRID_OFFSET["Gx"]
         y = np.concatenate((y, np.add(y, 100)))
         x = np.concatenate((x, np.array([0, duration, duration, 0, 0]) + 20))
         y = np.concatenate((y, np.array([0, 0, 100, 100, 0]) + 900))
@@ -143,7 +162,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # Gy
         duration = 20
         x = np.array([0, duration, duration, 0, 0]) + 30
-        y = np.array([0, 0, 100, 100, 0]) + 590
+        y = np.array([0, 0, 100, 100, 0]) + self.GRID_OFFSET["Gy"]
         self.Gy_line.setData(x, y)
         # readout
         duration = 20
@@ -160,34 +179,33 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # RF
         pen = pg.mkPen(color=(255, 0, 0))
         name = "Rf,FA="+str(self.FA)
-        self.Rf_line=plotwidget.plot([0,0],pen=pen,name=name)
+        self.sequance_ref_line["RF"]=plotwidget.plot([0,0],pen=pen,name=name)
         #Gz
         pen = pg.mkPen(color=(0, 255, 0))
         name = "Gz(SL)"
-        self.Gz_line=plotwidget.plot([0,0],pen=pen,name=name)
+        self.sequance_ref_line["Gz"]=plotwidget.plot([0,0],pen=pen,name=name)
         #Gx
         pen = pg.mkPen(color=(255, 255, 0))
         name = "Gx(Phase)"
-        self.Gx_line=plotwidget.plot([0,0],pen=pen,name=name)
+        self.sequance_ref_line["Gx"]=plotwidget.plot([0,0],pen=pen,name=name)
         #Gy
         pen = pg.mkPen(color=(255, 0, 255))
         name = "Gy(Freq)"
-        self.Gy_line = plotwidget.plot([0,0],pen=pen,name=name)
+        self.sequance_ref_line["Gy"]= plotwidget.plot([0,0],pen=pen,name=name)
         #readout
         pen = pg.mkPen(color=(0, 255, 255))
         name = "Readout"
-        self.Ro_line = plotwidget.plot([0,0],pen=pen,name=name)
+        self.sequance_ref_line["Ro"]= plotwidget.plot([0,0],pen=pen,name=name)
         #TR
         pen = pg.mkPen(color=(226,135,67))
         name = "TR"
-        self.Tr_line= pg.InfiniteLine(pos=200,angle=90,pen=pen,label=name,name=name)
-        plotwidget.addItem(self.Tr_line)
-
+        self.sequance_ref_line["TR"]= pg.InfiniteLine(pos=200,angle=90,pen=pen,label=name,name=name)
+        plotwidget.addItem(self.sequance_ref_line["TR"])
         # TE
         pen = pg.mkPen(color=(128,0,128))
         name = "TE"
-        self.Te_line = pg.InfiniteLine(pos=50, angle=90, pen=pen, label=name, name=name)
-        plotwidget.addItem(self.Te_line)
+        self.sequance_ref_line["TE"]= pg.InfiniteLine(pos=50, angle=90, pen=pen, label=name, name=name)
+        plotwidget.addItem(self.self.sequance_ref_line["TR"])
 
         #settings
         plotwidget.setLimits(xMin=0, xMax=self.TR*2, yMin=-50, yMax=2000)
