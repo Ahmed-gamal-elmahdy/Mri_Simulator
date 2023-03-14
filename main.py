@@ -50,6 +50,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.slider_brightness.setValue(0)
         self.ui.slider_brightness.valueChanged.connect(lambda: self.adjustBrightness())
         self.ui.comboBox_weights.currentIndexChanged.connect(lambda: self.weights())
+        self.ui.txtbox_FA.textChanged.connect(lambda: self.printText())
 
 
 
@@ -174,7 +175,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.btn_start_sequance.setDisabled(False)
 
 
-
+    def printText(self):
+        print(self.ui.txtbox_FA.toPlainText())
 
 
     def plot_simple_seq(self):

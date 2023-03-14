@@ -448,7 +448,7 @@ class Ui_MainWindow(object):
         self.label_6.setText(_translate("MainWindow", "Sequance"))
         self.label_7.setText(_translate("MainWindow", "Kspace"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_sequance), _translate("MainWindow", "Sequance"))
-        self.label_8.setText(_translate("MainWindow", "Flipe Angle:"))
+        self.label_8.setText(_translate("MainWindow", "Flip Angle:"))
         self.txtbox_FA.setPlainText(_translate("MainWindow", "312"))
         self.label_9.setText(_translate("MainWindow", "TR:"))
         self.txtbox_TR.setPlainText(_translate("MainWindow", "312"))
