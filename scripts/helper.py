@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-from Mri_Simulator.scripts import modifiedPhantom
+from scripts import modifiedPhantom
 
 
 def getPhantom(size):
@@ -57,40 +57,65 @@ def gradientXY(matrix, stepX, stepY):
     return res
 
 
-def construct(matrix,img):
-    rows = matrix.shape[0]
-    cols = matrix.shape[1]
-    res = np.zeros(np.shape(matrix))
-    for i in range(0, rows):
-        for j in range(0, cols):
-            exp = np.array([[np.exp(-1 / (img[i][j])), 0, 0],
-                            [0, np.exp(-1 / (img[i][j])), 0],
-                            [0, 0, 1]])
-            res[i, j] = np.dot(exp,matrix[i][j])
-    return res
-
-
-
-def reconstructImage(img):
-    size=np.shape(img)[0]
-    kSpace = np.zeros((size, size), dtype=np.complex_)
-    vectors = np.zeros((size, size, 3))
+def reconstructImage(self):
+    kSpace = np.zeros((self.phantomSize, self.phantomSize), dtype=np.complex_)
+    vectors = np.zeros((self.phantomSize, self.phantomSize, 3))
     vectors[:, :, 2] = 1
 
-    for i in range(0, size):
-        rotatedMatrix = rotateX(vectors,90)
-        decayedRotatedMatrix = construct(rotatedMatrix,img)
-        for j in range(0, size):
-            stepX = (360 / size) * i
-            stepY = (360 / size) * j
+    for i in range(0, self.phantomSize):
+        rotatedMatrix = rotateX(vectors, self.cosFA, self.sinFA)
+        decayedRotatedMatrix = decay(rotatedMatrix, self.T2, self.TE)
+
+
+        for j in range(0, self.phantomSize):
+            stepX = (360 / self.phantomSize) * i
+            stepY = (360 / self.phantomSize) * j
             phaseEncodedMatrix = gradientXY(decayedRotatedMatrix, stepY, stepX)
             sigmaX = np.sum(phaseEncodedMatrix[:, :, 0])
             sigmaY = np.sum(phaseEncodedMatrix[:, :, 1])
-            valueToAdd = complex(sigmaX, sigmaY)
+            valueToAdd = np.complex(sigmaX, sigmaY)
             kSpace[i, j] = valueToAdd
+
+        vectors = recovery(decayedRotatedMatrix, self.T1, self.TR)
         decayedRotatedMatrix[:, :, 0] = 0
         decayedRotatedMatrix[:, :, 1] = 0
+        # vectors = np.zeros((self.phantomSize, self.phantomSize, 3))
+        # vectors[:, :, 2] = 1
+        self.showKSpace(kSpace)
+        print(i)
 
-    print(np.fft.fft2(kSpace))
+    # kSpace = np.fft.fftshift(kSpace)
+    # kSpace = np.fft.fft2(kSpace)
+    # for i in range(0, self.phantomSize):
+    #     kSpace[i, :] = np.fft.fft(kSpace[i, :])
+    # for i in range(0, self.phantomSize):
+    #     kSpace[:, i] = np.fft.fft(kSpace[:, i])
+    kSpace = np.fft.fft2(kSpace)
+    self.showKSpace(kSpace)
+
+def decay(matrix, T2, t=1):
+    rows = matrix.shape[0]
+    cols = matrix.shape[1]
+    decayedMat = np.zeros(np.shape(matrix))
+    for i in range(0, rows):
+        for j in range(0, cols):
+            exp = np.array([[np.exp(-t / (T2[i][j])), 0, 0],
+                            [0, np.exp(-t / (T2[i][j])), 0],
+                            [0, 0, 1]])
+            decayedMat[i, j] = exp.dot(matrix[i][j])
+    return decayedMat
+
+def recovery(matrix, T1, t=1):
+    rows = matrix.shape[0]
+    cols = matrix.shape[1]
+    recoveryMat = np.zeros(np.shape(matrix))
+    for i in range(0, rows):
+        for j in range(0, cols):
+            exp = np.array([[1, 0, 0],
+                            [0, 1, 0],
+                            [0, 0, np.exp(-t / (T1[i][j]))]])
+            recoveryMat[i, j] = exp.dot(matrix[i][j]) + np.array([0, 0, 1 - np.exp(-t / (T1[i][j]))])
+    return recoveryMat
+
 
 

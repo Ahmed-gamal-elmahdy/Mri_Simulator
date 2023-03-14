@@ -6,7 +6,7 @@ import random
 import sys
 from io import BytesIO
 
-import sigpy
+
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
@@ -30,7 +30,9 @@ import cv2
 import numpy as np
 from PIL import Image
 from gui import Ui_MainWindow
-from scripts.helper import *
+from scripts import *
+from scripts.helper import getPhantom
+
 
 warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
