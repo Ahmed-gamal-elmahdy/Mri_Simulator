@@ -1,7 +1,11 @@
 import math
+import threading
+import time
+
 import numpy as np
 
-from Mri_Simulator.scripts import modifiedPhantom
+from scripts import modifiedPhantom
+
 
 
 def getPhantom(size):
@@ -41,6 +45,7 @@ def gradientXY(self,matrix, stepY, stepX):
 
 
 def reconstructImage(self):
+
     shape = np.shape(self.phantom_ndarray)
     phantomSize = shape[0]
     kSpace = np.zeros((phantomSize, phantomSize), dtype=complex)
@@ -53,19 +58,23 @@ def reconstructImage(self):
             stepX = (360 / phantomSize) * i
             stepY = (360 / phantomSize) * j
             phaseEncodedMatrix = gradientXY(self,rotatedMat, stepY, stepX)
-            sigmaX = np.round(np.sum(phaseEncodedMatrix[:, :, 0]) , 3)
-            sigmaY = np.round(np.sum(phaseEncodedMatrix[:, :, 1]) , 3)
-            valueToAdd = complex(sigmaY, sigmaX)
+            sigmaX = np.round(np.sum(phaseEncodedMatrix[:, :, 0]) , 5)
+            sigmaY = np.round(np.sum(phaseEncodedMatrix[:, :, 1]) , 5)
+            valueToAdd = complex(-1*sigmaY, -1*sigmaX)
             kSpace[i, j] = valueToAdd
+
 
         imgVectors = np.zeros((phantomSize, phantomSize, 3))
         imgVectors[:, :, 2] = self.phantom_ndarray
-        self.setKspaceimg(np.round(np.abs(np.fft.fftshift(kSpace)),3))
+        self.setKspaceimg(kSpace)
+
+
+
 
 
     reconstructedImg = np.fft.ifft2(kSpace)
-    reconstructedImg = np.round(np.abs(reconstructedImg),3)
-    self.setKspaceimg(np.round(np.abs(np.fft.fftshift(kSpace)), 3))
+    reconstructedImg = np.round(np.abs(reconstructedImg),5)
+    self.setKspaceimg(kSpace)
     return reconstructedImg
 
 
