@@ -50,7 +50,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.slider_brightness.setValue(0)
         self.ui.slider_brightness.valueChanged.connect(lambda: self.adjustBrightness())
         self.ui.comboBox_weights.currentIndexChanged.connect(lambda: self.weights())
-        self.phantomSizeChanged()
+
+
 
         # self.ui.comboBox_size.addItems(["256", "512"])
 
@@ -65,14 +66,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.seqplot = self.ui.plotwidget_sequance
 
         self.img = None
+
         self.brightness = self.ui.slider_brightness.value()
         self.weighted = None
         self.img = None
         self.reader = None
 
+
         self.TR = 90
         self.TE = 60
         self.FA = 90
+
 
         self.map = {
             "csf": {
@@ -96,6 +100,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 "pd": "0.61",
             },
         }
+
 
         self.GRID_OFFSET = {
             "Rf": 1820,
@@ -128,6 +133,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.init_plot_sequance()
         self.init_plot_analyzer()
         self.plot_simple_seq()
+        self.phantomSizeChanged()
 
     def save_Seq(self):
         seq = {
@@ -161,10 +167,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             json.dump(seq, f, ensure_ascii=False, indent=4)
 
     def start_sequance(self):
+
         self.ui.btn_start_sequance.setDisabled(True)
         opt = reconstructImage(self)
         self.setReconsImage(opt)
         self.ui.btn_start_sequance.setDisabled(False)
+
+
 
 
 
@@ -202,7 +211,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.analyzer_ref_line["TE"].setPos(60)
         #TR
         self.analyzer_ref_line["TR"].setPos(90)
-
 
     def init_plot_sequance(self):
         plotwidget = self.ui.plotwidget_sequance
