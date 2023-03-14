@@ -9,7 +9,7 @@ __all__ = ['modshepp_logan']
 
 ##Modified shepp_logan based on sigpy funciton
 
-def modshepp_logan(shape, dtype=np.complex):
+def modshepp_logan(shape, dtype=complex):
     """Generates a Shepp Logan phantom with a given shape and dtype.
 
     Args:
