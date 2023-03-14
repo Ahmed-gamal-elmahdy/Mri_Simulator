@@ -62,8 +62,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.img = None
         self.ui.btn_start_sequance.clicked.connect(lambda: self.updateFA())
 
-        self.TR = 100
-        self.TE = 50
+        self.TR = 70
+        self.TE = 60
         self.FA = 90
 
 
@@ -96,6 +96,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                    "x": self.Ro_line.getData()[0].tolist(),
                    "y": self.Ro_line.getData()[1].tolist(),
                },
+                "FA":self.FA,
+            "TR":self.TR,
+            "TE":self.TE,
                }
         fileName= QtWidgets.QFileDialog.getSaveFileName(self, "Open json", (QtCore.QDir.currentPath()), "json (*.json)")
         with open(fileName[0], 'w', encoding='utf-8') as f:
@@ -134,7 +137,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def init_plot_seq(self):
         plotwidget = self.ui.plotwidget_sequance
-        #plotwidget.setBackground("k")
+        #plotwidget.setBackground("w")
         plotwidget.setYRange(-50,2000)
         plotwidget.addLegend(offset=(0,1))
         plotwidget.hideAxis("left")
@@ -167,7 +170,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # TE
         pen = pg.mkPen(color=(128,0,128))
         name = "TE"
-        self.Te_line = pg.InfiniteLine(pos=50, angle=90, pen=pen, label=name, name=name,movable=True)
+        self.Te_line = pg.InfiniteLine(pos=50, angle=90, pen=pen, label=name, name=name)
         plotwidget.addItem(self.Te_line)
 
         #settings
@@ -223,12 +226,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 gy=seq["Gy"]
                 gz=seq["Gz"]
                 ro=seq["Ro"]
+                self.TR=seq["TR"]
+                self.TE=seq["TE"]
+                self.FA=seq["FA"]
                 self.Rf_line.setData(rf["x"], rf["y"])
                 self.Gz_line.setData(gz["x"], gz["y"])
                 self.Gy_line.setData(gy["x"], gy["y"])
                 self.Gx_line.setData(gx["x"], gx["y"])
                 self.Ro_line.setData(ro["x"], ro["y"])
-                self.Tr_line.setPos(20)
+                self.Tr_line.setPos(self.TR)
+                self.Te_line.setPos(self.TE)
             except (IOError, SyntaxError):
                 self.error('Check File Extension')
 
