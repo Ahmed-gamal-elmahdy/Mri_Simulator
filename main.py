@@ -31,7 +31,7 @@ import numpy as np
 from PIL import Image
 from gui import Ui_MainWindow
 from scripts import *
-from scripts.helper import getPhantom
+from scripts.helper import getPhantom,reconstructImage
 
 
 warnings.filterwarnings("error")
@@ -48,8 +48,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.actionOpen.triggered.connect(lambda: self.browse())
         self.ui.actionSave_as.triggered.connect(lambda: self.save_Seq())
         self.ui.comboBox_size.currentIndexChanged.connect(lambda: self.phantomSizeChanged())
+        self.ui.btn_start_sequance.clicked.connect(lambda :self.start_sequance())
 
-        self.ui.comboBox_size.addItems(["256", "512"])
+        #self.ui.comboBox_size.addItems(["256", "512"])
 
         # Mouse Events
         self.ui.label_phantom.setMouseTracking(False)
@@ -105,6 +106,19 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         fileName= QtWidgets.QFileDialog.getSaveFileName(self, "Open json", (QtCore.QDir.currentPath()), "json (*.json)")
         with open(fileName[0], 'w', encoding='utf-8') as f:
             json.dump(seq, f, ensure_ascii=False, indent=4)
+
+
+
+    def start_sequance(self):
+        opt=reconstructImage(self)
+        self.setReconsImage(opt)
+
+
+
+
+
+
+
 
     def plot_simple_seq(self):
         # RF
@@ -243,14 +257,27 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def phantomSizeChanged(self):
         size = self.ui.comboBox_size.currentText()
+        self.phantom_ndarray=getPhantom(size)
         # rebuild phantom with the new size
-        self.setPhantomImage(getPhantom(size))
+        self.setPhantomImage(self.phantom_ndarray)
 
     def setPhantomImage(self, img):
         # no need to resize set scaled content fill the img
         # img = cv2.resize(img, (512, 512))
         self.img = qimage2ndarray.array2qimage(img)
         self.ui.label_phantom.setPixmap(QPixmap(self.img))
+
+    def setReconsImage(self, img):
+        # no need to resize set scaled content fill the img
+        # img = cv2.resize(img, (512, 512))
+        self.recons_img = qimage2ndarray.array2qimage(img)
+        self.ui.label_recons_img.setPixmap(QPixmap(self.recons_img))
+
+    def setKspaceimg(self, img):
+        # no need to resize set scaled content fill the img
+        # img = cv2.resize(img, (512, 512))
+        self.kspace_img = qimage2ndarray.array2qimage(img)
+        self.ui.label_kspace.setPixmap(QPixmap(self.kspace_img))
 
 
 def main():

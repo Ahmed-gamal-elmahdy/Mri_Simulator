@@ -625,7 +625,14 @@
                </widget>
               </item>
               <item>
-               <widget class="PlotWidget" name="plotwidget_sequance" native="true"/>
+               <widget class="PlotWidget" name="plotwidget_sequance" native="true">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="QLabel" name="label_7">
@@ -645,32 +652,39 @@
               </item>
               <item>
                <widget class="QWidget" name="plotwidget_kspace" native="true">
-                <widget class="QLabel" name="label_kspace">
-                 <property name="geometry">
-                  <rect>
-                   <x>200</x>
-                   <y>150</y>
-                   <width>47</width>
-                   <height>13</height>
-                  </rect>
-                 </property>
-                 <property name="text">
-                  <string/>
-                 </property>
-                 <property name="scaledContents">
-                  <bool>true</bool>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btn_start_sequance">
-                <property name="text">
-                 <string notr="true">Start Sequance</string>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
+                <layout class="QGridLayout" name="gridLayout_4">
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="label_kspace">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>512</width>
+                     <height>512</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="scaledContents">
+                    <bool>true</bool>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
              </layout>
@@ -889,6 +903,13 @@
               </item>
              </layout>
             </widget>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QPushButton" name="btn_start_sequance">
+            <property name="text">
+             <string notr="true">Start Sequance</string>
+            </property>
            </widget>
           </item>
          </layout>
