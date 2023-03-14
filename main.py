@@ -72,6 +72,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.init_plot_seq()
 
 
+
+
     def save_Seq(self):
         seq = {
                'Rf': {
@@ -156,10 +158,26 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         pen = pg.mkPen(color=(0, 255, 255))
         name = "Readout"
         self.Ro_line = plotwidget.plot([0,0],pen=pen,name=name)
+        #TR
+        pen = pg.mkPen(color=(226,135,67))
+        name = "TR"
+        self.Tr_line= pg.InfiniteLine(pos=200,angle=90,pen=pen,label=name,name=name)
+        plotwidget.addItem(self.Tr_line)
+
+        # TE
+        pen = pg.mkPen(color=(128,0,128))
+        name = "TE"
+        self.Te_line = pg.InfiniteLine(pos=50, angle=90, pen=pen, label=name, name=name,movable=True)
+        plotwidget.addItem(self.Te_line)
+
+        #settings
         plotwidget.setLimits(xMin=0, xMax=self.TR*2, yMin=-50, yMax=2000)
         p1=plotwidget.plotItem
         p1.setLabel('bottom', 'Time', units='s', color='g', **{'font-size': '12pt'})
         p1.getAxis('bottom').setPen(pg.mkPen(color='g', width=3))
+
+
+
 
     def updateFA(self):
         x = np.arange(0, 20, 0.1);
@@ -210,6 +228,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 self.Gy_line.setData(gy["x"], gy["y"])
                 self.Gx_line.setData(gx["x"], gx["y"])
                 self.Ro_line.setData(ro["x"], ro["y"])
+                self.Tr_line.setPos(20)
             except (IOError, SyntaxError):
                 self.error('Check File Extension')
 

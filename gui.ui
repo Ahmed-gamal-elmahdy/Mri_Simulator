@@ -122,6 +122,12 @@
                 </property>
                 <item row="0" column="0">
                  <widget class="QLabel" name="label_phantom">
+                  <property name="maximumSize">
+                   <size>
+                    <width>512</width>
+                    <height>512</height>
+                   </size>
+                  </property>
                   <property name="text">
                    <string/>
                   </property>
@@ -559,8 +565,44 @@
           <item row="0" column="0">
            <widget class="QTabWidget" name="tabWidget">
             <property name="currentIndex">
-             <number>0</number>
+             <number>1</number>
             </property>
+            <widget class="QWidget" name="tab_modified_img">
+             <attribute name="title">
+              <string>Reconstructed Image</string>
+             </attribute>
+             <widget class="QLabel" name="label_recons_img">
+              <property name="geometry">
+               <rect>
+                <x>20</x>
+                <y>140</y>
+                <width>512</width>
+                <height>512</height>
+               </rect>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>512</width>
+                <height>512</height>
+               </size>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="scaledContents">
+               <bool>true</bool>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </widget>
             <widget class="QWidget" name="tab_sequance">
              <attribute name="title">
               <string>Sequance</string>
@@ -602,7 +644,27 @@
                </widget>
               </item>
               <item>
-               <widget class="PlotWidget" name="plotwidget_kspace" native="true"/>
+               <widget class="QWidget" name="plotwidget_kspace" native="true">
+                <widget class="QLabel" name="label_kspace">
+                 <property name="geometry">
+                  <rect>
+                   <x>200</x>
+                   <y>150</y>
+                   <width>47</width>
+                   <height>13</height>
+                  </rect>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="scaledContents">
+                  <bool>true</bool>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </widget>
               </item>
               <item>
                <widget class="QPushButton" name="btn_start_sequance">
