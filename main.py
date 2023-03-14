@@ -31,7 +31,7 @@ import numpy as np
 from PIL import Image
 from gui import Ui_MainWindow
 from scripts import *
-from scripts.helper import getPhantom
+from scripts.helper import getPhantom,reconstructImage
 
 
 warnings.filterwarnings("error")
@@ -48,8 +48,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.actionOpen.triggered.connect(lambda: self.browse())
         self.ui.actionSave_as.triggered.connect(lambda: self.save_Seq())
         self.ui.comboBox_size.currentIndexChanged.connect(lambda: self.phantomSizeChanged())
+        self.ui.btn_start_sequance.clicked.connect(lambda :self.start_sequance())
 
-        self.ui.comboBox_size.addItems(["256", "512"])
+        #self.ui.comboBox_size.addItems(["256", "512"])
 
         # Mouse Events
         self.ui.label_phantom.setMouseTracking(False)
@@ -64,14 +65,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.img = None
         self.ui.btn_start_sequance.clicked.connect(lambda: self.updateFA())
 
-        self.TR = 100
-        self.TE = 50
+        self.TR = 70
+        self.TE = 60
         self.FA = 90
 
 
         #sequance plot
         self.seq_Data=None
         self.init_plot_seq()
+
+
 
 
     def save_Seq(self):
@@ -96,10 +99,26 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                    "x": self.Ro_line.getData()[0].tolist(),
                    "y": self.Ro_line.getData()[1].tolist(),
                },
+                "FA":self.FA,
+            "TR":self.TR,
+            "TE":self.TE,
                }
         fileName= QtWidgets.QFileDialog.getSaveFileName(self, "Open json", (QtCore.QDir.currentPath()), "json (*.json)")
         with open(fileName[0], 'w', encoding='utf-8') as f:
             json.dump(seq, f, ensure_ascii=False, indent=4)
+
+
+
+    def start_sequance(self):
+        opt=reconstructImage(self)
+        self.setReconsImage(opt)
+
+
+
+
+
+
+
 
     def plot_simple_seq(self):
         # RF
@@ -134,7 +153,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def init_plot_seq(self):
         plotwidget = self.ui.plotwidget_sequance
-        #plotwidget.setBackground("k")
+        #plotwidget.setBackground("w")
         plotwidget.setYRange(-50,2000)
         plotwidget.addLegend(offset=(0,1))
         plotwidget.hideAxis("left")
@@ -158,10 +177,26 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         pen = pg.mkPen(color=(0, 255, 255))
         name = "Readout"
         self.Ro_line = plotwidget.plot([0,0],pen=pen,name=name)
+        #TR
+        pen = pg.mkPen(color=(226,135,67))
+        name = "TR"
+        self.Tr_line= pg.InfiniteLine(pos=200,angle=90,pen=pen,label=name,name=name)
+        plotwidget.addItem(self.Tr_line)
+
+        # TE
+        pen = pg.mkPen(color=(128,0,128))
+        name = "TE"
+        self.Te_line = pg.InfiniteLine(pos=50, angle=90, pen=pen, label=name, name=name)
+        plotwidget.addItem(self.Te_line)
+
+        #settings
         plotwidget.setLimits(xMin=0, xMax=self.TR*2, yMin=-50, yMax=2000)
         p1=plotwidget.plotItem
         p1.setLabel('bottom', 'Time', units='s', color='g', **{'font-size': '12pt'})
         p1.getAxis('bottom').setPen(pg.mkPen(color='g', width=3))
+
+
+
 
     def updateFA(self):
         x = np.arange(0, 20, 0.1);
@@ -207,24 +242,42 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 gy=seq["Gy"]
                 gz=seq["Gz"]
                 ro=seq["Ro"]
+                self.TR=seq["TR"]
+                self.TE=seq["TE"]
+                self.FA=seq["FA"]
                 self.Rf_line.setData(rf["x"], rf["y"])
                 self.Gz_line.setData(gz["x"], gz["y"])
                 self.Gy_line.setData(gy["x"], gy["y"])
                 self.Gx_line.setData(gx["x"], gx["y"])
                 self.Ro_line.setData(ro["x"], ro["y"])
+                self.Tr_line.setPos(self.TR)
+                self.Te_line.setPos(self.TE)
             except (IOError, SyntaxError):
                 self.error('Check File Extension')
 
     def phantomSizeChanged(self):
         size = self.ui.comboBox_size.currentText()
+        self.phantom_ndarray=getPhantom(size)
         # rebuild phantom with the new size
-        self.setPhantomImage(getPhantom(size))
+        self.setPhantomImage(self.phantom_ndarray)
 
     def setPhantomImage(self, img):
         # no need to resize set scaled content fill the img
         # img = cv2.resize(img, (512, 512))
         self.img = qimage2ndarray.array2qimage(img)
         self.ui.label_phantom.setPixmap(QPixmap(self.img))
+
+    def setReconsImage(self, img):
+        # no need to resize set scaled content fill the img
+        # img = cv2.resize(img, (512, 512))
+        self.recons_img = qimage2ndarray.array2qimage(img)
+        self.ui.label_recons_img.setPixmap(QPixmap(self.recons_img))
+
+    def setKspaceimg(self, img):
+        # no need to resize set scaled content fill the img
+        # img = cv2.resize(img, (512, 512))
+        self.kspace_img = qimage2ndarray.array2qimage(img)
+        self.ui.label_kspace.setPixmap(QPixmap(self.kspace_img))
 
 
 def main():
