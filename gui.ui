@@ -565,7 +565,7 @@
           <item row="0" column="0">
            <widget class="QTabWidget" name="tabWidget">
             <property name="currentIndex">
-             <number>1</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="tab_modified_img">
              <attribute name="title">
@@ -748,38 +748,20 @@
                        </sizepolicy>
                       </property>
                       <property name="text">
-                       <string>Flipe Angle:</string>
+                       <string>Flip Angle :  </string>
                       </property>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPlainTextEdit" name="txtbox_FA">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
+                     <widget class="QDoubleSpinBox" name="spinbox_FA">
+                      <property name="decimals">
+                       <number>1</number>
                       </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>30</width>
-                        <height>25</height>
-                       </size>
+                      <property name="maximum">
+                       <double>360.000000000000000</double>
                       </property>
-                      <property name="horizontalScrollBarPolicy">
-                       <enum>Qt::ScrollBarAsNeeded</enum>
-                      </property>
-                      <property name="sizeAdjustPolicy">
-                       <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
-                      </property>
-                      <property name="lineWrapMode">
-                       <enum>QPlainTextEdit::WidgetWidth</enum>
-                      </property>
-                      <property name="plainText">
-                       <string>312</string>
-                      </property>
-                      <property name="overwriteMode">
-                       <bool>false</bool>
+                      <property name="value">
+                       <double>90.000000000000000</double>
                       </property>
                      </widget>
                     </item>
@@ -809,33 +791,15 @@
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPlainTextEdit" name="txtbox_TR">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
+                     <widget class="QDoubleSpinBox" name="spinbox_TR">
+                      <property name="decimals">
+                       <number>1</number>
                       </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>30</width>
-                        <height>25</height>
-                       </size>
+                      <property name="maximum">
+                       <double>5000.000000000000000</double>
                       </property>
-                      <property name="horizontalScrollBarPolicy">
-                       <enum>Qt::ScrollBarAsNeeded</enum>
-                      </property>
-                      <property name="sizeAdjustPolicy">
-                       <enum>QAbstractScrollArea::AdjustToContents</enum>
-                      </property>
-                      <property name="lineWrapMode">
-                       <enum>QPlainTextEdit::WidgetWidth</enum>
-                      </property>
-                      <property name="plainText">
-                       <string>312</string>
-                      </property>
-                      <property name="overwriteMode">
-                       <bool>false</bool>
+                      <property name="value">
+                       <double>60.000000000000000</double>
                       </property>
                      </widget>
                     </item>
@@ -865,33 +829,15 @@
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPlainTextEdit" name="txtbox_TE">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
+                     <widget class="QDoubleSpinBox" name="spinbox_TE">
+                      <property name="decimals">
+                       <number>1</number>
                       </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>30</width>
-                        <height>25</height>
-                       </size>
+                      <property name="maximum">
+                       <double>5000.000000000000000</double>
                       </property>
-                      <property name="horizontalScrollBarPolicy">
-                       <enum>Qt::ScrollBarAsNeeded</enum>
-                      </property>
-                      <property name="sizeAdjustPolicy">
-                       <enum>QAbstractScrollArea::AdjustToContents</enum>
-                      </property>
-                      <property name="lineWrapMode">
-                       <enum>QPlainTextEdit::WidgetWidth</enum>
-                      </property>
-                      <property name="plainText">
-                       <string>312</string>
-                      </property>
-                      <property name="overwriteMode">
-                       <bool>false</bool>
+                      <property name="value">
+                       <double>90.000000000000000</double>
                       </property>
                      </widget>
                     </item>

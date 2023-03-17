@@ -5,7 +5,9 @@ __pycache__/
 
 # C extensions
 *.so
-
+.idea/.name
+.idea/misc.xml
+.idea/Mri_Simulator.iml
 # Distribution / packaging
 .Python
 build/

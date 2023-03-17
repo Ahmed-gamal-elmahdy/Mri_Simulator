@@ -1,35 +1,15 @@
-import codecs
 import json
 import logging as log
-import os
-import random
 import sys
-from io import BytesIO
-
-from PyQt5 import QtWidgets
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
 import warnings
-import matplotlib.image as mpimg
-from matplotlib import pyplot as plt
 
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtGui import QPixmap, QColor, qRed
-from PyQt5.QtWidgets import QMessageBox
 import numpy as np
-import qimage2ndarray
-import sys
-import math
-import threading
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QFileDialog
-from math import sin, cos, pi
-import csv
-# import cv2
-import numpy as np
-from PIL import Image
+import qimage2ndarray
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtGui import QPixmap, qRed
+
 from gui import Ui_MainWindow
-from scripts import *
 from scripts.helper import getPhantom, reconstructImage
 
 warnings.filterwarnings("error")
@@ -53,8 +33,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
 
 
-        # self.ui.comboBox_size.addItems(["256", "512"])
-
         # Mouse Events
         self.ui.label_phantom.setMouseTracking(False)
         self.ui.label_phantom.mouseDoubleClickEvent = self.setColoredPixel
@@ -72,11 +50,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.img = None
         self.reader = None
 
-
         self.TR = 90
         self.TE = 60
         self.FA = 90
-
 
         self.map = {
             "csf": {
@@ -101,39 +77,55 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             },
         }
 
-
         self.GRID_OFFSET = {
             "Rf": 1820,
             "Gz": 1410,
             "Gy": 1000,
             "Gx": 590,
         }
-        # sequance plot
-        self.seq_Data = None
-
 
         self.analyzer_ref_line = {
-            "RF": None,
-            "Gz": None,
-            "Gy": None,
-            "Gx": None,
-            "Ro": None,
-            "TR": None,
-            "TE": None
+            "RF": pg.PlotItem,
+            "Gz": pg.PlotItem,
+            "Gy": pg.PlotItem,
+            "Gx": pg.PlotItem,
+            "Ro": pg.PlotItem,
+            "TR": pg.InfiniteLine,
+            "TE": pg.InfiniteLine,
+            "FA": None
         }
         self.sequance_ref_line = {
-            "RF": None,
-            "Gz": None,
-            "Gy": None,
-            "Gx": None,
-            "Ro": None,
-            "TR": None,
-            "TE": None
+            "RF": pg.PlotItem,
+            "Gz": pg.PlotItem,
+            "Gy": pg.PlotItem,
+            "Gx": pg.PlotItem,
+            "Ro": pg.PlotItem,
+            "TR": pg.InfiniteLine,
+            "TE": pg.InfiniteLine,
+            "FA": None
         }
         self.init_plot_sequance()
         self.init_plot_analyzer()
         self.plot_simple_seq()
         self.phantomSizeChanged()
+
+        self.ui.spinbox_FA.valueChanged.connect(lambda: self.set_FA())
+        self.ui.spinbox_TR.valueChanged.connect(lambda: self.set_TR())
+        self.ui.spinbox_TE.valueChanged.connect(lambda: self.set_TE())
+
+    def set_TR(self):
+        val = self.ui.spinbox_TR.value()
+        self.analyzer_ref_line["TR"].setPos(val)
+
+    def set_TE(self):
+        val = self.ui.spinbox_TE.value()
+        self.analyzer_ref_line["TE"].setPos(val)
+
+    def set_FA(self):
+        val = self.ui.spinbox_FA.value()
+        print(val)
+        self.analyzer_ref_line["FA"] = val
+        print(self.analyzer_ref_line["FA"])
 
     def save_Seq(self):
         seq = {
@@ -157,9 +149,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 "x": self.analyzer_ref_line["Ro"].getData()[0].tolist(),
                 "y": self.analyzer_ref_line["Ro"].getData()[1].tolist(),
             },
-            "FA": int(self.FA),
-            "TR": int(self.TR),
-            "TE": int(self.TE),
+            "FA": self.analyzer_ref_line["FA"],
+            "TR": self.analyzer_ref_line["TR"].getPos(),
+            "TE": self.analyzer_ref_line["TE"].getPos(),
         }
         fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Open json", (QtCore.QDir.currentPath()),
                                                          "json (*.json)")
@@ -172,10 +164,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         opt = reconstructImage(self)
         self.setReconsImage(opt)
         self.ui.btn_start_sequance.setDisabled(False)
-
-
-
-
 
     def plot_simple_seq(self):
         # RF
@@ -207,9 +195,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         x = np.arange(0, duration, 0.1) + 50
         y = np.random.randint(0, 360, len(x))
         self.analyzer_ref_line["Ro"].setData(x, y)
-        #TE
+        # TE
         self.analyzer_ref_line["TE"].setPos(60)
-        #TR
+        # TR
         self.analyzer_ref_line["TR"].setPos(90)
 
     def init_plot_sequance(self):
@@ -220,7 +208,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         plotwidget.hideAxis("left")
         # RF
         pen = pg.mkPen(color=(255, 0, 0))
-        name = "Rf,FA=" + str(self.FA)
+        name = "RF"
         self.sequance_ref_line["RF"] = plotwidget.plot([0, 0], pen=pen, name=name)
         # Gz
         pen = pg.mkPen(color=(0, 255, 0))
@@ -262,8 +250,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         plotwidget.hideAxis("left")
         # RF
         pen = pg.mkPen(color=(255, 0, 0))
-        name = "Rf,FA=" + str(self.FA)
+        name = "RF"
         self.analyzer_ref_line["RF"] = plotwidget.plot([0, 0], pen=pen, name=name)
+
         # Gz
         pen = pg.mkPen(color=(0, 255, 0))
         name = "Gz(SL)"
@@ -296,11 +285,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         p1 = plotwidget.plotItem
         p1.setLabel('bottom', 'Time', units='s', color='g', **{'font-size': '12pt'})
         p1.getAxis('bottom').setPen(pg.mkPen(color='g', width=3))
-
-    def updateFA(self):
-        x = np.arange(0, 20, 0.1);
-        y = np.sinc(x - 10) * self.FA + 1820
-        self.Rf_line.setData(x, y)
 
     def setColoredPixel(self, event):
         w = self.ui.label_phantom.geometry().width()
@@ -351,6 +335,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 self.sequance_ref_line["Ro"].setData(ro["x"], ro["y"])
                 self.sequance_ref_line["TR"].setPos(self.TR)
                 self.sequance_ref_line["TE"].setPos(self.TE)
+
             except (IOError, SyntaxError):
                 self.error('Check File Extension')
 
@@ -383,9 +368,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         shape = shape[0]
         for i in range(shape):
             for j in range(shape):
-                if(img[i][j]==0):
-                    img[i][j] = 10**-10
-        self.kspace_img = qimage2ndarray.array2qimage(20*(np.log(np.abs(img))))
+                if (img[i][j] == 0):
+                    img[i][j] = 10 ** -10
+        self.kspace_img = qimage2ndarray.array2qimage(20 * (np.log(np.abs(img))))
         self.ui.label_kspace.setPixmap(QPixmap(self.kspace_img))
 
     def getColors(self):
@@ -394,7 +379,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         colors = [[0 for i in range(x)] for j in range(y)]
         for i in range(y):
             for j in range(x):
-                colors[i][j] = qRed(self.img.pixel(j,i))
+                colors[i][j] = qRed(self.img.pixel(j, i))
 
         return colors
 
