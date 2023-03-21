@@ -1,13 +1,9 @@
 import math
-import threading
-import time
-
 import numpy as np
-
 from scripts import modifiedPhantom
 
 
-
+# get phantom Data with corresponding Size
 def getPhantom(size):
     size=int(size)
     phantom= modifiedPhantom.modshepp_logan((size, size), dtype=float)
@@ -15,8 +11,7 @@ def getPhantom(size):
     return phantom
 
 
-
-
+# Rotate Spin in X
 def rotationX(self,matrix):
     shape = np.shape(matrix)
     rows = shape[0]
@@ -29,7 +24,7 @@ def rotationX(self,matrix):
                 np.array([[1, 0, 0], [0, math.cos(angle), -1 * math.sin(angle)], [0, math.sin(angle), math.cos(angle)]]), matrix[i, j])
     return newMatrix
 
-
+# Get Encoded Spins
 def gradientXY(self,matrix, stepY, stepX):
     shape = np.shape(matrix)
     rows = shape[0]
@@ -43,7 +38,7 @@ def gradientXY(self,matrix, stepY, stepX):
                 np.array([[math.cos(angle), -1 * math.sin(angle), 0], [math.sin(angle), math.cos(angle), 0], [0, 0, 1]]), matrix[i, j])
     return newMatrix
 
-
+# get Image data from Kspace
 def reconstructImage(self):
 
     shape = np.shape(self.phantom_ndarray)
@@ -63,14 +58,9 @@ def reconstructImage(self):
             valueToAdd = complex(-1*sigmaY, -1*sigmaX)
             kSpace[i, j] = valueToAdd
 
-
         imgVectors = np.zeros((phantomSize, phantomSize, 3))
         imgVectors[:, :, 2] = self.phantom_ndarray
         self.setKspaceimg(kSpace)
-
-
-
-
 
     reconstructedImg = np.fft.ifft2(kSpace)
     reconstructedImg = np.round(np.abs(reconstructedImg),5)

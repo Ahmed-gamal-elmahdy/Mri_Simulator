@@ -1,35 +1,13 @@
-import codecs
 import json
 import logging as log
-import os
-import random
-import sys
-from io import BytesIO
-
-from PyQt5 import QtWidgets
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
 import warnings
-import matplotlib.image as mpimg
-from matplotlib import pyplot as plt
-
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtGui import QPixmap, QColor, qRed
-from PyQt5.QtWidgets import QMessageBox
-import numpy as np
+from PyQt5.QtGui import QPixmap, qRed
 import qimage2ndarray
 import sys
-import math
-import threading
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QFileDialog
-from math import sin, cos, pi
-import csv
-# import cv2
 import numpy as np
-from PIL import Image
 from gui import Ui_MainWindow
-from scripts import *
 from scripts.helper import getPhantom, reconstructImage
 
 warnings.filterwarnings("error")
@@ -41,10 +19,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         super(ApplicationWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        # Event Listeners
         self.ui.actionOpen.triggered.connect(lambda: self.browse())
         self.ui.actionSave_as.triggered.connect(lambda: self.save_Seq())
         self.ui.comboBox_size.currentIndexChanged.connect(lambda: self.phantomSizeChanged())
-        self.ui.btn_start_sequance.clicked.connect(lambda: self.start_sequance())
+        self.ui.btn_start_sequance.clicked.connect(lambda: self.start_sequence())
         self.ui.slider_brightness.setMinimum(100)
         self.ui.slider_brightness.setMinimum(-100)
         self.ui.slider_brightness.setValue(0)
@@ -52,33 +32,28 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.comboBox_weights.currentIndexChanged.connect(lambda: self.weights())
         self.ui.txtbox_FA.textChanged.connect(lambda: self.printText())
 
-
-
-        # self.ui.comboBox_size.addItems(["256", "512"])
-
         # Mouse Events
         self.ui.label_phantom.setMouseTracking(False)
-        self.ui.label_phantom.mouseDoubleClickEvent = self.setColoredPixel
+        self.ui.label_phantom.mouseDoubleClickEvent = self.highlight
 
         # Enable antialiasing for prettier plots
         pg.setConfigOptions(antialias=True)
         self.ui.label_phantom.setScaledContents(True)
-        ## Create image to display
+
+        # ----- Variable Initialization ------ #
+        # Plot
         self.seqplot = self.ui.plotwidget_sequance
-
+        # image
         self.img = None
-
         self.brightness = self.ui.slider_brightness.value()
+        # Tissue Property Weighted Image
         self.weighted = None
-        self.img = None
+        # Tissue Property Info Image
         self.reader = None
-
-
         self.TR = 90
         self.TE = 60
         self.FA = 90
-
-
+        # Tissue Properties
         self.map = {
             "csf": {
                 "t1": "4000ms",
@@ -101,18 +76,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 "pd": "0.61",
             },
         }
-
-
         self.GRID_OFFSET = {
             "Rf": 1820,
             "Gz": 1410,
             "Gy": 1000,
             "Gx": 590,
         }
-        # sequance plot
+        # Sequence plot
         self.seq_Data = None
-
-
         self.analyzer_ref_line = {
             "RF": None,
             "Gz": None,
@@ -131,11 +102,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             "TR": None,
             "TE": None
         }
-        self.init_plot_sequance()
+        # Initial Sequence and Phantom upon Opening The App
+        self.init_plot_sequence()
         self.init_plot_analyzer()
         self.plot_simple_seq()
         self.phantomSizeChanged()
 
+    # Saving The Sequence as JSON File
     def save_Seq(self):
         seq = {
             'Rf': {
@@ -162,19 +135,19 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             "TR": int(self.TR),
             "TE": int(self.TE),
         }
-        fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Open json", (QtCore.QDir.currentPath()),
+        fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Save as json", (QtCore.QDir.currentPath()),
                                                          "json (*.json)")
         with open(fileName[0], 'w', encoding='utf-8') as f:
             json.dump(seq, f, ensure_ascii=False, indent=4)
 
-    def start_sequance(self):
-
+    # Start The Current Sequence and Reconstruct the Image
+    def start_sequence(self):
         self.ui.btn_start_sequance.setDisabled(True)
         opt = reconstructImage(self)
         self.setReconsImage(opt)
         self.ui.btn_start_sequance.setDisabled(False)
 
-
+    # TODO
     def printText(self):
         print(self.ui.txtbox_FA.toPlainText())
 
@@ -209,12 +182,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         x = np.arange(0, duration, 0.1) + 50
         y = np.random.randint(0, 360, len(x))
         self.analyzer_ref_line["Ro"].setData(x, y)
-        #TE
+        # TE
         self.analyzer_ref_line["TE"].setPos(60)
-        #TR
+        # TR
         self.analyzer_ref_line["TR"].setPos(90)
 
-    def init_plot_sequance(self):
+    # Initial Sequence
+    def init_plot_sequence(self):
         plotwidget = self.ui.plotwidget_sequance
         # plotwidget.setBackground("w")
         plotwidget.setYRange(-50, 2000)
@@ -257,6 +231,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         p1.setLabel('bottom', 'Time', units='s', color='g', **{'font-size': '12pt'})
         p1.getAxis('bottom').setPen(pg.mkPen(color='g', width=3))
 
+    # TODO
     def init_plot_analyzer(self):
         plotwidget = self.ui.plotwidget_synth
         plotwidget.setYRange(-50, 2000)
@@ -299,19 +274,24 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         p1.setLabel('bottom', 'Time', units='s', color='g', **{'font-size': '12pt'})
         p1.getAxis('bottom').setPen(pg.mkPen(color='g', width=3))
 
+    # get RF Pulse
     def updateFA(self):
         x = np.arange(0, 20, 0.1);
         y = np.sinc(x - 10) * self.FA + 1820
         self.Rf_line.setData(x, y)
 
-    def setColoredPixel(self, event):
+    # Highlight Phantom Pixel on Click
+    def highlight(self, event):
+        # get Dimensions
         w = self.ui.label_phantom.geometry().width()
         h = self.ui.label_phantom.geometry().height()
         self.phantomSize = int(self.ui.comboBox_size.currentText())
+        # adjust Highlighted Pixel Size
         scaleX = self.phantomSize / w
         scaleY = self.phantomSize / h
         self.x = int(np.floor(event.pos().x() * scaleX))
         self.y = int(np.floor(event.pos().y() * scaleY))
+        # Create a Pen To draw the Highlighted area with
         self.ui.label_phantom.setPixmap(QPixmap(self.img))
         canvas = QPixmap(self.img)
         paint = QtGui.QPainter()
@@ -321,13 +301,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         pen = QtGui.QPen(QtCore.Qt.red)
         pen.setWidthF(0.9)
         paint.setPen(pen)
-        # draw rectangle on painter
+        # draw rectangle on canvas
         rect = QtCore.QRectF(self.x, self.y, 1, 1)
         paint.drawRect(rect)
-        # set pixmap onto the label widget
+        # update Widget To Show Phantom with Highlighted area
         paint.end()
         self.ui.label_phantom.setPixmap(canvas)
 
+    # get a JSON file Sequence From Machine
     def browse(self):
         # Open Browse Window & Check
         fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open json", (QtCore.QDir.currentPath()),
@@ -337,6 +318,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             try:
                 with open(fileName) as user_file:
                     seq = user_file.read()
+                # Extract Sequence Data
                 seq = json.loads(seq)
                 rf = seq["Rf"]
                 gx = seq["Gx"]
@@ -356,6 +338,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             except (IOError, SyntaxError):
                 self.error('Check File Extension')
 
+    # Change Phantom With new Size
     def phantomSizeChanged(self):
         size = self.ui.comboBox_size.currentText()
         self.phantom_ndarray = getPhantom(size)
@@ -367,39 +350,45 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.setPhantomImage(getPhantom(size))
         self.weights()
 
+    # Add new sized phantom to widget
     def setPhantomImage(self, img):
         # no need to resize set scaled content fill the img
         # img = cv2.resize(img, (512, 512))
         self.img = qimage2ndarray.array2qimage(img)
         self.ui.label_phantom.setPixmap(QPixmap(self.img))
 
+    # add reconstructed image to widget
     def setReconsImage(self, img):
         # no need to resize set scaled content fill the img
         # img = cv2.resize(img, (512, 512))
         self.recons_img = qimage2ndarray.array2qimage(img)
         self.ui.label_recons_img.setPixmap(QPixmap(self.recons_img))
 
+    # add data to Kspace widget
     def setKspaceimg(self, img):
+        # update widget in real time
         QtCore.QCoreApplication.processEvents()
         shape = np.shape(img)
         shape = shape[0]
         for i in range(shape):
             for j in range(shape):
-                if(img[i][j]==0):
-                    img[i][j] = 10**-10
-        self.kspace_img = qimage2ndarray.array2qimage(20*(np.log(np.abs(img))))
+                if (img[i][j] == 0):
+                    img[i][j] = 10 ** -10
+        self.kspace_img = qimage2ndarray.array2qimage(20 * (np.log(np.abs(img))))
         self.ui.label_kspace.setPixmap(QPixmap(self.kspace_img))
 
+    # get the color of the current phantom
     def getColors(self):
         x = self.img.width()
         y = self.img.height()
         colors = [[0 for i in range(x)] for j in range(y)]
         for i in range(y):
             for j in range(x):
-                colors[i][j] = qRed(self.img.pixel(j,i))
+                colors[i][j] = qRed(self.img.pixel(j, i))
 
         return colors
 
+    # update color values of phantom
     def adjustBrightness(self):
         self.brightness = self.ui.slider_brightness.value()
         self.ui.lable_brightness.setText(str(self.brightness))
@@ -407,13 +396,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.adjusted = np.clip(self.adjusted, 0, 255)
         self.setPhantomImage(self.adjusted)
 
+    # update phantom with new color values of selected Weight
     def weights(self):
         weight = self.ui.comboBox_weights.currentText()
         self.ui.slider_brightness.setValue(0)
         self.ui.lable_brightness.setText('0')
+        # clear old weights
         self.setPhantomImage(self.oimg)
         imageData = self.getColors()
-
+        # get Weighted phantom
         if weight == 'T2':
             self.weighted = np.abs(np.add(imageData, -255))
             self.setPhantomImage(self.weighted)
@@ -423,8 +414,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         else:
             self.weighted = self.oimg
 
+    # get Tissue Property on Click
     def getInfo(self):
         pixelData = qRed(self.reader.pixel(self.x, self.y))
+        # get property from map and update corresponding widget
         if pixelData == 255:
             self.ui.label_T1.setText(self.map['fat']['t1'])
             self.ui.label_T2.setText(self.map['fat']['t2'])
