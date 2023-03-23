@@ -2,7 +2,7 @@
 
 ## Description
 An application for simulating Different MRI Sequences and Displaying useful Data for MRI Images.
-
+![](https://imgur.com/d7xid6A.gif)
 ## Features
 1. Navigate a Shepp-logan MRI Phantom by:
    * Adjusting Brightness for better visualization.
@@ -10,23 +10,23 @@ An application for simulating Different MRI Sequences and Displaying useful Data
    * Changing the weight of the phantom to T1, T2 OR SD.
    * Selecting Different Phantom Sizes.
 
-![](https://imgur.com/vFXWyFG.gif)
+![](https://imgur.com/AP0yKcj.gif)
     <br><br>
 2. Open and Display different MRI sequences.
 
-![](https://imgur.com/PoTU53y.gif)
+![](https://imgur.com/tP0XpxI.gif)
    <br><br>
 3. Apply different MRI sequences to the Phantom and reconstruct it <br> in real time.
    * Choose Sampling Method (Cartesian, Radial, Spiral)
    * adjust Sampling Parameters (number of Spirals, Rounds / Number of lines) <br><br>
-![](https://imgur.com/USjCH4R.gif)
+![](https://imgur.com/lEBvPAV.gif)
    <br><br>
 4. Create and Save New Sequences:
    * adjust the TE, TR, and FA
    * Recovery and Decay of Spins Simulation
    * Suggests of Best Ernst angle
 
-![](https://imgur.com/NSAuaux.gif)
+![](https://imgur.com/mmH4cnf.gif)
    <br><br>
 
 5. Artifacts Simulation and Noise Simulation

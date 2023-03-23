@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-from Mri_Simulator.scripts import modifiedPhantom
+from scripts import modifiedPhantom
 
 
 def getPhantom(size):
