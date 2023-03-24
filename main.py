@@ -17,6 +17,7 @@ warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 
+
 class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(ApplicationWindow, self).__init__()
@@ -35,6 +36,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.comboBox_weights.currentIndexChanged.connect(lambda: self.weights())
         self.ui.label_phantom.setMouseTracking(False)
         self.ui.label_phantom.mouseDoubleClickEvent = self.highlight
+        self.ui.label_phantom.mouseMoveEvent = self.adjustContrastAndBrightness
         pg.setConfigOptions(antialias=True)
         self.ui.label_phantom.setScaledContents(True)
 
@@ -46,6 +48,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # image
         self.img = None
         self.brightness = self.ui.slider_brightness.value()
+        self.contrast = 1.0
+        # For Mouse moving, changing Brightness and Contrast
+        self.oldY = None
+        self.oldX = None
         # Tissue Property Weighted Image
         self.weighted = None
         # Tissue Property Info Image
@@ -439,15 +445,54 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         return colors
 
-    def adjustBrightness(self):
-        """
-        update brightness values of phantom
-        """
-        self.brightness = self.ui.slider_brightness.value()
-        self.ui.lable_brightness.setText(str(self.brightness))
-        self.adjusted = self.weighted + self.brightness
+    def adjustContrastAndBrightness(self, event):
+        maxContrast = 2
+        minContrast = 0.1
+        maxBrightness = 100
+        minBrightness = -100
+        displacement = 10
+
+        if self.oldX is None:
+            self.oldX = event.pos().x()
+        if self.oldY is None:
+            self.oldY = event.pos().y()
+            return
+
+        newX = event.pos().x()
+        if newX - displacement > self.oldX:
+            self.contrast += 0.05
+        elif newX < self.oldX - displacement:
+            self.contrast -= 0.05
+
+        newY = event.pos().y()
+        if newY - displacement > self.oldY:
+            self.brightness += 5
+        elif newY < self.oldY - displacement:
+            self.brightness -= 5
+
+        # Check for Limits
+        if self.contrast > maxContrast:
+            self.contrast = maxContrast
+        elif self.contrast < minContrast:
+            self.contrast = minContrast
+        if self.brightness > maxBrightness:
+            self.brightness = maxBrightness
+        elif self.brightness < minBrightness:
+            self.brightness = minBrightness
+
+        self.adjusted = np.add(self.weighted, -127)
+        self.adjusted = np.multiply(self.adjusted, self.contrast)
+        self.adjusted = np.add(self.adjusted, 127)
         self.adjusted = np.clip(self.adjusted, 0, 255)
+
+        self.adjusted = self.adjusted + self.brightness
+        self.adjusted = np.clip(self.adjusted, 0, 255)
+
+        np.round(self.adjusted)
         self.setPhantomImage(self.adjusted)
+
+        self.oldY = newY
+        self.oldX = newX
 
     def weights(self):
         """
