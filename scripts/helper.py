@@ -70,11 +70,11 @@ def reconstructImage(self):
     :param self: reference to the object
     :return: Array representing the reconstructed image from K-space
     """
-    shape = np.shape(self.phantom_ndarray)
+    shape = np.shape(self.adjusted)
     phantomSize = shape[0]
     kSpace = np.zeros((phantomSize, phantomSize), dtype=complex)
     imgVectors = np.zeros((phantomSize, phantomSize, 3))
-    imgVectors[:, :, 2] = self.phantom_ndarray
+    imgVectors[:, :, 2] = self.adjusted
 
     for i in range(0, phantomSize):
         rotatedMat = rotationX(self, imgVectors)
@@ -89,7 +89,7 @@ def reconstructImage(self):
 
         imgVectors = np.zeros((phantomSize, phantomSize, 3))
         # set the magnitude back to maximum in Z-axis
-        imgVectors[:, :, 2] = self.phantom_ndarray
+        imgVectors[:, :, 2] = self.adjusted
         self.setKspaceimg(kSpace)
 
     reconstructedImg = np.fft.ifft2(kSpace)
