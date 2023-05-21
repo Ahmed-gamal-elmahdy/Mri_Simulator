@@ -10,8 +10,10 @@ import qimage2ndarray
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import QPixmap, qRed
 from qt_material import apply_stylesheet
+
 from gui import Ui_MainWindow
 from scripts.helper import getPhantom, reconstructImage
+from scripts.plot import *
 
 warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
@@ -53,7 +55,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.TR = 90
         self.TE = 60
         self.FA = 90
-
         # Tissue Properties
 
         self.map = {
@@ -86,8 +87,28 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             "Gx": 590,
         }
 
+
+
+        # Set Data Ref
+
+        self.seqDataRef = {
+            "FA": 90,
+            "TR": 100,
+            "TE": 30
+        }
+
+        self.prepDataRef = {
+            "FA": 90,
+            "TR": 100,
+            "TE": 30
+        }
+        self.synthDataRef = {
+            "FA": 90,
+            "TR": 100,
+            "TE": 30
+        }
         # Set sequence Synthesiser reference lines
-        self.synthesiser_ref_line = {
+        self.synthLineRef = {
             "RF": pg.PlotItem,
             "Gz": pg.PlotItem,
             "Gy": pg.PlotItem,
@@ -97,7 +118,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             "TE": pg.InfiniteLine,
             "FA": None
         }
-        self.sequence_ref_line = {
+        self.seqLineRef = {
             "RF": pg.PlotItem,
             "Gz": pg.PlotItem,
             "Gy": pg.PlotItem,
@@ -107,10 +128,31 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             "TE": pg.InfiniteLine,
             "FA": None
         }
-        # Initial Sequence and Phantom upon Opening The App
-        self.init_plot_sequence()
-        self.init_plot_synthesiser()
-        self.plot_simple_seq()
+        self.prepLineRef = {
+            "RF": pg.PlotItem,
+            "Gz": pg.PlotItem,
+            "Gy": pg.PlotItem,
+            "Gx": pg.PlotItem,
+            "Ro": pg.PlotItem,
+            "TR": pg.InfiniteLine,
+            "TE": pg.InfiniteLine,
+            "FA": None
+        }
+
+        #initialize plot widgets
+
+        init_plot(self,self.ui.plotwidget_sequance,self.seqLineRef,"seq")
+        init_plot(self, self.ui.plotwidget_prep, self.prepLineRef,"prep")
+        init_plot(self, self.ui.plotwidget_synth, self.synthLineRef,"seq")
+        #
+        plot_simple_seq(self,self.seqLineRef,self.seqDataRef)
+        plot_simple_seq(self, self.synthLineRef, self.synthDataRef)
+        #
+
+        plot_tagging_prep(self, self.prepLineRef, self.prepDataRef)
+
+
+        #
         self.phantomSizeChanged()
 
         self.ui.spinbox_FA.valueChanged.connect(lambda: self.set_FA())
@@ -122,22 +164,25 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update TR line value
         """
         val = self.ui.spinbox_TR.value()
-        self.synthesiser_ref_line["TR"].setPos(val)
+        synthDataRef["TR"]=val
+        self.synthLineRef["TR"].setPos(val)
 
     def set_TE(self):
         """
         update TE line value
         """
         val = self.ui.spinbox_TE.value()
-        self.synthesiser_ref_line["TE"].setPos(val)
+        synthDataRef["TE"] = val
+        self.synthLineRef["TE"].setPos(val)
 
     def set_FA(self):
         """
         update Flip angle line value
         """
         val = self.ui.spinbox_FA.value()
-        self.synthesiser_ref_line["FA"] = val
-        print(self.synthesiser_ref_line["FA"])
+        synthDataRef["FA"] = val
+        self.synthLineRef["FA"] = val
+
 
     def save_Seq(self):
         """
@@ -407,7 +452,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         :param img: 2d array
         """
         self.recons_img = qimage2ndarray.array2qimage(img)
-        self.ui.label_recons_img.setPixmap(QPixmap(self.recons_img))
+
+        if(self.ui.comboBox_viewer.currentIndex() == 0):
+            self.ui.label_img1.setPixmap(QPixmap(self.recons_img))
+        else:
+            self.ui.label_img2.setPixmap(QPixmap(self.recons_img))
+
+
 
     def setKspaceimg(self, img):
         """
@@ -423,7 +474,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 if (img[i][j] == 0):
                     img[i][j] = 10 ** -10
         self.kspace_img = qimage2ndarray.array2qimage(20 * (np.log(np.abs(img))))
-        self.ui.label_kspace.setPixmap(QPixmap(self.kspace_img))
+
+        if self.ui.comboBox_viewer.currentIndex() == 0:
+            self.ui.label_kspace1.setPixmap(QPixmap(self.kspace_img))
+        else:
+            self.ui.label_kspace2.setPixmap(QPixmap(self.kspace_img))
+
 
     def getColors(self):
         """

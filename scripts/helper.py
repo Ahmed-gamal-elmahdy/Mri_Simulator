@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-from Mri_Simulator.scripts import modifiedPhantom
+from scripts import modifiedPhantom
 
 
 def getPhantom(size):
@@ -90,6 +90,10 @@ def reconstructImage(self):
         imgVectors = np.zeros((phantomSize, phantomSize, 3))
         # set the magnitude back to maximum in Z-axis
         imgVectors[:, :, 2] = self.phantom_ndarray
+
+
+
+
         self.setKspaceimg(kSpace)
 
     reconstructedImg = np.fft.ifft2(kSpace)
