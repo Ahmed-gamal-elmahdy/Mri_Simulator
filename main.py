@@ -10,8 +10,10 @@ import qimage2ndarray
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import QPixmap, qRed
 from qt_material import apply_stylesheet
+
 from gui import Ui_MainWindow
 from scripts.helper import getPhantom, reconstructImage
+from scripts.plot import *
 
 warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
@@ -49,38 +51,40 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.img = None
         self.brightness = self.ui.slider_brightness.value()
         self.contrast = 1.0
+        # initialSize = int(self.ui.comboBox_size.currentText())
         # For Mouse moving, changing Brightness and Contrast
         self.oldY = None
         self.oldX = None
         # Tissue Property Weighted Image
         self.weighted = None
+        # self.T1 = np.zeros(initialSize,initialSize)
+        # self.T2 = np.zeros(initialSize,initialSize)
         # Tissue Property Info Image
         self.reader = None
         self.TR = 90
         self.TE = 60
-        self.FA = 90
-
+        self.FA = 100
         # Tissue Properties
 
         self.map = {
             "csf": {
-                "t1": "4000ms",
-                "t2": "200ms",
+                "t1": "4000",
+                "t2": "200",
                 "pd": "1",
             },
             "grayMatter": {
-                "t1": "900ms",
-                "t2": "90ms",
+                "t1": "900",
+                "t2": "90",
                 "pd": "0.69",
             },
             "muscle": {
-                "t1": "900ms",
-                "t2": "50ms",
+                "t1": "900",
+                "t2": "50",
                 "pd": "0.72",
             },
             "fat": {
-                "t1": "250ms",
-                "t2": "70ms",
+                "t1": "250",
+                "t2": "70",
                 "pd": "0.61",
             },
         }
@@ -92,8 +96,28 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             "Gx": 590,
         }
 
+
+
+        # Set Data Ref
+
+        self.seqDataRef = {
+            "FA": 90,
+            "TR": 100,
+            "TE": 30
+        }
+
+        self.prepDataRef = {
+            "FA": 90,
+            "TR": 100,
+            "TE": 30
+        }
+        self.synthDataRef = {
+            "FA": 90,
+            "TR": 100,
+            "TE": 30
+        }
         # Set sequence Synthesiser reference lines
-        self.synthesiser_ref_line = {
+        self.synthLineRef = {
             "RF": pg.PlotItem,
             "Gz": pg.PlotItem,
             "Gy": pg.PlotItem,
@@ -103,7 +127,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             "TE": pg.InfiniteLine,
             "FA": None
         }
-        self.sequence_ref_line = {
+        self.seqLineRef = {
             "RF": pg.PlotItem,
             "Gz": pg.PlotItem,
             "Gy": pg.PlotItem,
@@ -113,10 +137,30 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             "TE": pg.InfiniteLine,
             "FA": None
         }
-        # Initial Sequence and Phantom upon Opening The App
-        self.init_plot_sequence()
-        self.init_plot_synthesiser()
-        self.plot_simple_seq()
+        self.prepLineRef = {
+            "RF": pg.PlotItem,
+            "Gz": pg.PlotItem,
+            "Gy": pg.PlotItem,
+            "Gx": pg.PlotItem,
+            "Ro": pg.PlotItem,
+            "TR": pg.InfiniteLine,
+            "TE": pg.InfiniteLine,
+            "FA": None
+        }
+
+        #initialize plot widgets
+
+        init_plot(self,self.ui.plotwidget_sequance,self.seqLineRef,"seq")
+        init_plot(self, self.ui.plotwidget_prep, self.prepLineRef,"prep")
+        init_plot(self, self.ui.plotwidget_synth, self.synthLineRef,"seq")
+        #
+        plot_simple_seq(self,self.seqLineRef,self.seqDataRef)
+        plot_simple_seq(self, self.synthLineRef, self.synthDataRef)
+        #
+
+        plot_tagging_prep(self, self.prepLineRef, self.prepDataRef)
+
+        #
         self.phantomSizeChanged()
 
         self.ui.spinbox_FA.valueChanged.connect(lambda: self.set_FA())
@@ -128,22 +172,25 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update TR line value
         """
         val = self.ui.spinbox_TR.value()
-        self.synthesiser_ref_line["TR"].setPos(val)
+        synthDataRef["TR"]=val
+        self.synthLineRef["TR"].setPos(val)
 
     def set_TE(self):
         """
         update TE line value
         """
         val = self.ui.spinbox_TE.value()
-        self.synthesiser_ref_line["TE"].setPos(val)
+        synthDataRef["TE"] = val
+        self.synthLineRef["TE"].setPos(val)
 
     def set_FA(self):
         """
         update Flip angle line value
         """
         val = self.ui.spinbox_FA.value()
-        self.synthesiser_ref_line["FA"] = val
-        print(self.synthesiser_ref_line["FA"])
+        synthDataRef["FA"] = val
+        self.synthLineRef["FA"] = val
+
 
     def save_Seq(self):
         """
@@ -389,14 +436,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         """
         Change Phantom With new Size
         """
-        size = self.ui.comboBox_size.currentText()
+        size = int(self.ui.comboBox_size.currentText())
+        self.T1 = np.zeros((size,size))
+        self.T2 = np.zeros((size,size))
+        self.setPhantomImage(getPhantom(size))
+        self.getProperties()
         self.phantom_ndarray = getPhantom(size)
         # rebuild phantom with the new size
         self.oimg = getPhantom(size)
         self.reader = qimage2ndarray.array2qimage(getPhantom(size))
         self.ui.slider_brightness.setValue(0)
         self.ui.lable_brightness.setText('0')
-        self.setPhantomImage(getPhantom(size))
         self.weights()
 
     def setPhantomImage(self, img):
@@ -413,7 +463,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         :param img: 2d array
         """
         self.recons_img = qimage2ndarray.array2qimage(img)
-        self.ui.label_recons_img.setPixmap(QPixmap(self.recons_img))
+
+        if(self.ui.comboBox_viewer.currentIndex() == 0):
+            self.ui.label_img1.setPixmap(QPixmap(self.recons_img))
+        else:
+            self.ui.label_img2.setPixmap(QPixmap(self.recons_img))
+
+
 
     def setKspaceimg(self, img):
         """
@@ -429,7 +485,12 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 if (img[i][j] == 0):
                     img[i][j] = 10 ** -10
         self.kspace_img = qimage2ndarray.array2qimage(20 * (np.log(np.abs(img))))
-        self.ui.label_kspace.setPixmap(QPixmap(self.kspace_img))
+
+        if self.ui.comboBox_viewer.currentIndex() == 0:
+            self.ui.label_kspace1.setPixmap(QPixmap(self.kspace_img))
+        else:
+            self.ui.label_kspace2.setPixmap(QPixmap(self.kspace_img))
+
 
     def getColors(self):
         """
@@ -522,21 +583,38 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         pixelData = qRed(self.reader.pixel(self.x, self.y))
         # get property from map and update corresponding widget
         if pixelData == 255:
-            self.ui.label_T1.setText(self.map['fat']['t1'])
-            self.ui.label_T2.setText(self.map['fat']['t2'])
+            self.ui.label_T1.setText(self.map['fat']['t1']+"ms")
+            self.ui.label_T2.setText(self.map['fat']['t2']+"ms")
             self.ui.label_PD.setText(self.map['fat']['pd'])
         elif pixelData == 101 or pixelData == 76 or pixelData == 25:
-            self.ui.label_T1.setText(self.map['muscle']['t1'])
-            self.ui.label_T2.setText(self.map['muscle']['t2'])
+            self.ui.label_T1.setText(self.map['muscle']['t1']+"ms")
+            self.ui.label_T2.setText(self.map['muscle']['t2']+"ms")
             self.ui.label_PD.setText(self.map['muscle']['pd'])
         elif pixelData == 50:
-            self.ui.label_T1.setText(self.map['grayMatter']['t1'])
-            self.ui.label_T2.setText(self.map['grayMatter']['t2'])
+            self.ui.label_T1.setText(self.map['grayMatter']['t1']+"ms")
+            self.ui.label_T2.setText(self.map['grayMatter']['t2']+"ms")
             self.ui.label_PD.setText(self.map['grayMatter']['pd'])
         else:
-            self.ui.label_T1.setText(self.map['csf']['t1'])
-            self.ui.label_T2.setText(self.map['csf']['t2'])
+            self.ui.label_T1.setText(self.map['csf']['t1']+"ms")
+            self.ui.label_T2.setText(self.map['csf']['t2']+"ms")
             self.ui.label_PD.setText(self.map['csf']['pd'])
+
+    def getProperties(self):
+        pixelData = self.getColors()
+        for i in range(len(pixelData)):
+            for j in range(len(pixelData)):
+                if pixelData[i][j] == 255:
+                    self.T1[i][j] = self.map['fat']['t1']
+                    self.T2[i][j] = self.map['fat']['t2']
+                elif pixelData[i][j] == 101 or pixelData == 76 or pixelData == 25:
+                    self.T1[i][j] = self.map['muscle']['t1']
+                    self.T2[i][j] = self.map['muscle']['t2']
+                elif pixelData[i][j] == 50:
+                    self.T1[i][j] = self.map['grayMatter']['t1']
+                    self.T2[i][j] = self.map['grayMatter']['t2']
+                else:
+                    self.T1[i][j] = self.map['csf']['t1']
+                    self.T2[i][j] = self.map['csf']['t2']
 
 
 def main():
