@@ -19,6 +19,7 @@ warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 
+
 class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(ApplicationWindow, self).__init__()
@@ -37,6 +38,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.comboBox_weights.currentIndexChanged.connect(lambda: self.weights())
         self.ui.label_phantom.setMouseTracking(False)
         self.ui.label_phantom.mouseDoubleClickEvent = self.highlight
+        self.ui.label_phantom.mouseMoveEvent = self.adjustContrastAndBrightness
         pg.setConfigOptions(antialias=True)
         self.ui.label_phantom.setScaledContents(True)
 
@@ -48,8 +50,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # image
         self.img = None
         self.brightness = self.ui.slider_brightness.value()
+        self.contrast = 1.0
+        # initialSize = int(self.ui.comboBox_size.currentText())
+        # For Mouse moving, changing Brightness and Contrast
+        self.oldY = None
+        self.oldX = None
         # Tissue Property Weighted Image
         self.weighted = None
+        # self.T1 = np.zeros(initialSize,initialSize)
+        # self.T2 = np.zeros(initialSize,initialSize)
         # Tissue Property Info Image
         self.reader = None
         self.TR = 90
@@ -59,23 +68,23 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         self.map = {
             "csf": {
-                "t1": "4000ms",
-                "t2": "200ms",
+                "t1": "4000",
+                "t2": "200",
                 "pd": "1",
             },
             "grayMatter": {
-                "t1": "900ms",
-                "t2": "90ms",
+                "t1": "900",
+                "t2": "90",
                 "pd": "0.69",
             },
             "muscle": {
-                "t1": "900ms",
-                "t2": "50ms",
+                "t1": "900",
+                "t2": "50",
                 "pd": "0.72",
             },
             "fat": {
-                "t1": "250ms",
-                "t2": "70ms",
+                "t1": "250",
+                "t2": "70",
                 "pd": "0.61",
             },
         }
@@ -428,14 +437,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         """
         Change Phantom With new Size
         """
-        size = self.ui.comboBox_size.currentText()
+        size = int(self.ui.comboBox_size.currentText())
+        self.T1 = np.zeros((size,size))
+        self.T2 = np.zeros((size,size))
+        self.setPhantomImage(getPhantom(size))
+        self.getProperties()
         self.phantom_ndarray = getPhantom(size)
         # rebuild phantom with the new size
         self.oimg = getPhantom(size)
         self.reader = qimage2ndarray.array2qimage(getPhantom(size))
         self.ui.slider_brightness.setValue(0)
         self.ui.lable_brightness.setText('0')
-        self.setPhantomImage(getPhantom(size))
         self.weights()
 
     def setPhantomImage(self, img):
@@ -495,15 +507,54 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         return colors
 
-    def adjustBrightness(self):
-        """
-        update brightness values of phantom
-        """
-        self.brightness = self.ui.slider_brightness.value()
-        self.ui.lable_brightness.setText(str(self.brightness))
-        self.adjusted = self.weighted + self.brightness
+    def adjustContrastAndBrightness(self, event):
+        maxContrast = 2
+        minContrast = 0.1
+        maxBrightness = 100
+        minBrightness = -100
+        displacement = 10
+
+        if self.oldX is None:
+            self.oldX = event.pos().x()
+        if self.oldY is None:
+            self.oldY = event.pos().y()
+            return
+
+        newX = event.pos().x()
+        if newX - displacement > self.oldX:
+            self.contrast += 0.05
+        elif newX < self.oldX - displacement:
+            self.contrast -= 0.05
+
+        newY = event.pos().y()
+        if newY - displacement > self.oldY:
+            self.brightness += 5
+        elif newY < self.oldY - displacement:
+            self.brightness -= 5
+
+        # Check for Limits
+        if self.contrast > maxContrast:
+            self.contrast = maxContrast
+        elif self.contrast < minContrast:
+            self.contrast = minContrast
+        if self.brightness > maxBrightness:
+            self.brightness = maxBrightness
+        elif self.brightness < minBrightness:
+            self.brightness = minBrightness
+
+        self.adjusted = np.add(self.weighted, -127)
+        self.adjusted = np.multiply(self.adjusted, self.contrast)
+        self.adjusted = np.add(self.adjusted, 127)
         self.adjusted = np.clip(self.adjusted, 0, 255)
+
+        self.adjusted = self.adjusted + self.brightness
+        self.adjusted = np.clip(self.adjusted, 0, 255)
+
+        np.round(self.adjusted)
         self.setPhantomImage(self.adjusted)
+
+        self.oldY = newY
+        self.oldX = newX
 
     def weights(self):
         """
@@ -533,21 +584,38 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         pixelData = qRed(self.reader.pixel(self.x, self.y))
         # get property from map and update corresponding widget
         if pixelData == 255:
-            self.ui.label_T1.setText(self.map['fat']['t1'])
-            self.ui.label_T2.setText(self.map['fat']['t2'])
+            self.ui.label_T1.setText(self.map['fat']['t1']+"ms")
+            self.ui.label_T2.setText(self.map['fat']['t2']+"ms")
             self.ui.label_PD.setText(self.map['fat']['pd'])
         elif pixelData == 101 or pixelData == 76 or pixelData == 25:
-            self.ui.label_T1.setText(self.map['muscle']['t1'])
-            self.ui.label_T2.setText(self.map['muscle']['t2'])
+            self.ui.label_T1.setText(self.map['muscle']['t1']+"ms")
+            self.ui.label_T2.setText(self.map['muscle']['t2']+"ms")
             self.ui.label_PD.setText(self.map['muscle']['pd'])
         elif pixelData == 50:
-            self.ui.label_T1.setText(self.map['grayMatter']['t1'])
-            self.ui.label_T2.setText(self.map['grayMatter']['t2'])
+            self.ui.label_T1.setText(self.map['grayMatter']['t1']+"ms")
+            self.ui.label_T2.setText(self.map['grayMatter']['t2']+"ms")
             self.ui.label_PD.setText(self.map['grayMatter']['pd'])
         else:
-            self.ui.label_T1.setText(self.map['csf']['t1'])
-            self.ui.label_T2.setText(self.map['csf']['t2'])
+            self.ui.label_T1.setText(self.map['csf']['t1']+"ms")
+            self.ui.label_T2.setText(self.map['csf']['t2']+"ms")
             self.ui.label_PD.setText(self.map['csf']['pd'])
+
+    def getProperties(self):
+        pixelData = self.getColors()
+        for i in range(len(pixelData)):
+            for j in range(len(pixelData)):
+                if pixelData[i][j] == 255:
+                    self.T1[i][j] = self.map['fat']['t1']
+                    self.T2[i][j] = self.map['fat']['t2']
+                elif pixelData[i][j] == 101 or pixelData == 76 or pixelData == 25:
+                    self.T1[i][j] = self.map['muscle']['t1']
+                    self.T2[i][j] = self.map['muscle']['t2']
+                elif pixelData[i][j] == 50:
+                    self.T1[i][j] = self.map['grayMatter']['t1']
+                    self.T2[i][j] = self.map['grayMatter']['t2']
+                else:
+                    self.T1[i][j] = self.map['csf']['t1']
+                    self.T2[i][j] = self.map['csf']['t2']
 
 
 def main():
