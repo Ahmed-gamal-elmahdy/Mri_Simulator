@@ -81,7 +81,7 @@ def reconstructImage(self):
             kSpace[i, j] = valueToAdd
 
 
-        imgVectors = recovery(decayedRotatedMatrix, self.T1, 5)
+        #imgVectors = recovery(decayedRotatedMatrix, self.T1, 5)
         decayedRotatedMatrix[:, :, 0] = 0
         decayedRotatedMatrix[:, :, 1] = 0
         # imgVectors = np.zeros((phantomSize, phantomSize, 3))

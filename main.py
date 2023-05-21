@@ -63,7 +63,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.reader = None
         self.TR = 90
         self.TE = 60
-        self.FA = 90
+        self.FA = 100
         # Tissue Properties
 
         self.map = {
@@ -159,7 +159,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         #
 
         plot_tagging_prep(self, self.prepLineRef, self.prepDataRef)
-
 
         #
         self.phantomSizeChanged()
