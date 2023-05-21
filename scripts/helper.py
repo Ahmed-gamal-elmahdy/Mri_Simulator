@@ -46,12 +46,12 @@ def gradientXY(self, matrix, stepY, stepX):
 
 
 def reconstructImage(self):
-    self.T2 = np.float64(np.abs(np.add(self.getColors(), -255)))
-    self.T1 = np.float64(self.oimg)
-    mask = (self.T2 == 0)
-    self.T2[mask] = 1e-14
-    mask = (self.T1 < 1e-6)
-    self.T1[mask] = 1e-14
+    # self.T2 = np.float64(np.abs(np.add(self.getColors(), -255)))
+    # self.T1 = np.float64(self.oimg)
+    # mask = (self.T2 == 0)
+    # self.T2[mask] = 1e-14
+    # mask = (self.T1 < 1e-6)
+    # self.T1[mask] = 1e-14
     shape = np.shape(self.weighted)
     phantomSize = shape[0]
     # row = math.floor(np.shape(self.oimg)[0] / 3)
@@ -70,7 +70,7 @@ def reconstructImage(self):
 
     for i in range(0, phantomSize):
         rotatedMat = rotationX(self, imgVectors)
-        decayedRotatedMatrix = decay(rotatedMat, self.T2, 0.001)
+        decayedRotatedMatrix = decay(rotatedMat, self.T2, 0)
         for j in range(0, phantomSize):
             stepX = (360 / phantomSize) * i
             stepY = (360 / phantomSize) * j
@@ -80,7 +80,7 @@ def reconstructImage(self):
             valueToAdd = complex(-1 * sigmaY, -1 * sigmaX)
             kSpace[i, j] = valueToAdd
 
-        imgVectors = recovery(decayedRotatedMatrix, self.T1, 0.5)
+        imgVectors = recovery(decayedRotatedMatrix, self.T1, 5)
         decayedRotatedMatrix[:, :, 0] = 0
         decayedRotatedMatrix[:, :, 1] = 0
         # imgVectors = np.zeros((phantomSize, phantomSize, 3))
@@ -99,8 +99,8 @@ def decay(matrix, T2, t):
     decayedMat = np.zeros(np.shape(matrix))
     for i in range(0, rows):
         for j in range(0, cols):
-            exp = np.array([[np.float64(np.exp(-t / (T2[i][j]))), 0, 0],
-                            [0, np.float64(np.exp(-t / (T2[i][j]))), 0],
+            exp = np.array([[np.exp(-t / (T2[i][j])), 0, 0],
+                            [0, np.exp(-t / (T2[i][j])), 0],
                             [0, 0, 1]])
             decayedMat[i, j] = exp.dot(matrix[i][j])
     return decayedMat
@@ -114,6 +114,6 @@ def recovery(matrix, T1, t=1):
         for j in range(0, cols):
             exp = np.array([[1, 0, 0],
                             [0, 1, 0],
-                            [0, 0, np.float64(np.exp(-t / (T1[i][j])))]])
-            recoveryMat[i, j] = exp.dot(matrix[i][j]) + np.array([0, 0, 1 - np.float64(np.exp(-t / (T1[i][j])))])
+                            [0, 0, np.exp(-t / (T1[i][j]))]])
+            recoveryMat[i, j] = exp.dot(matrix[i][j]) + np.array([0, 0, 1 - np.exp(-t / (T1[i][j]))])
     return recoveryMat
