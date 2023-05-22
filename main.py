@@ -43,7 +43,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.spinbox_TR.setSingleStep(50)
         pg.setConfigOptions(antialias=True)
         self.ui.label_phantom.setScaledContents(True)
-
         self.error_dialog = QtWidgets.QErrorMessage()
 
         # ----- Variable Initialization ------ #
@@ -59,10 +58,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.weighted = None
         # Tissue Property Info Image
         self.reader = None
-
-        self.TR = 1000
-        self.TE = 10
-        self.FA = 10
 
 
         # Tissue Properties
@@ -183,7 +178,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update TR line value
         """
         val = self.ui.spinbox_TR.value()
-
         self.synthDataRef["TR"] = val
         self.synthLineRef["TR"].setPos(val)
 
@@ -193,7 +187,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update TE line value
         """
         val = self.ui.spinbox_TE.value()
-
         self.synthDataRef["TE"] = val
         self.synthLineRef["TE"].setPos(val)
 
@@ -203,7 +196,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update Flip angle line value
         """
         val = self.ui.spinbox_FA.value()
-
         self.synthDataRef["FA"] = val
         self.synthLineRef["FA"].setLabel(axis="top", text=f"FA = {val}")
 
@@ -223,6 +215,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             json.dump(seq, f, ensure_ascii=False, indent=4)
 
     def start_sequence(self):
+        print("Prep")
+        print(self.prepDataRef)
+
+        print("Seq")
+        print(self.seqDataRef)
         """
         Start The Current Sequence and Reconstruct the Image
         Disable The button during reconstruction to avoid crashing
@@ -311,6 +308,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                     seq = user_file.read()
                 # Extract Sequence Data
                 self.customLoaded = json.loads(seq)
+                self.ui.comboBox_seq_pulse.setCurrentIndex(2)
                 self.ui.comboBox_seq_pulse.setCurrentIndex(3)
             except (IOError, SyntaxError):
                 self.error_dialog.showMessage("Only json supported")

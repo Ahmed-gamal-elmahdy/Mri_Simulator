@@ -12,11 +12,11 @@ def getPhantom(size):
     return phantom
 
 
-def rotationX(self, matrix):
+def rotationX(self, matrix, angle):
     shape = np.shape(matrix)
     rows = shape[0]
     cols = shape[1]
-    angle = (self.FA) * (math.pi / 180)
+    angle = angle * (math.pi / 180)
     newMatrix = np.zeros(shape)
     for i in range(0, rows):
         for j in range(0, cols):
@@ -43,16 +43,36 @@ def gradientXY(self, matrix, stepY, stepX):
     return newMatrix
 
 
+def prepImage(self):
+    shape = np.shape(self.weighted)
+    phantomSize = shape[0]
+    imgVectors = np.zeros((phantomSize, phantomSize, 3))
+    imgVectors[:, :, 2] = self.weighted
+
+    if(self.prepDataRef["Title"] == "T1-Prep"):
+        angle = self.prepDataRef["FA"]
+        for i in range(0, phantomSize):
+            rotatedMat = rotationX(self, imgVectors, angle)
+    else:
+        angle = self.prepDataRef["FA"][0]
+        for i in range(0, phantomSize):
+            rotatedMat = rotationX(self, imgVectors, angle)
+        angle = self.prepDataRef["FA"][1]
+        for i in range(0, phantomSize):
+            rotatedMat = rotationX(self, rotatedMat, angle)
+
+    return rotatedMat
+
 def reconstructImage(self):
     shape = np.shape(self.weighted)
     phantomSize = shape[0]
     kSpace = np.zeros((phantomSize, phantomSize), dtype=complex)
     imgVectors = np.zeros((phantomSize, phantomSize, 3))
-    imgVectors[:, :, 2] = self.weighted
+    imgVectors= prepImage(self)
 
     for i in range(0, phantomSize):
-        rotatedMat = rotationX(self, imgVectors)
-        decayedRotatedMatrix = decay(rotatedMat, self.T2, self.TE)
+        rotatedMat = rotationX(self, imgVectors, self.seqDataRef["FA"])
+        decayedRotatedMatrix = decay(rotatedMat, self.T2, self.seqDataRef["TE"])
         for j in range(0, phantomSize):
             stepX = (360 / phantomSize) * i
             stepY = (360 / phantomSize) * j
@@ -62,7 +82,7 @@ def reconstructImage(self):
             valueToAdd = complex(-1 * sigmaY, -1 * sigmaX)
             kSpace[i, j] = valueToAdd
 
-        imgVectors = recovery(decayedRotatedMatrix, self.T1, self.TR)
+        imgVectors = recovery(decayedRotatedMatrix, self.T1, self.seqDataRef["TR"])
         decayedRotatedMatrix[:, :, 0] = 0
         decayedRotatedMatrix[:, :, 1] = 0
         self.setKspaceimg(kSpace)
