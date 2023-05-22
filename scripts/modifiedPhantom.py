@@ -24,7 +24,7 @@ def modshepp_logan(shape, dtype=complex):
 
 
 sl_amps = [1, -0.8, -0.2, -0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-#sl_amps2= [2,-0.98,-0.02,-0.02,0.01,0.01,0.01,0.01,0.01,0.01]
+# sl_amps2= [2,-0.98,-0.02,-0.02,0.01,0.01,0.01,0.01,0.01,0.01]
 
 
 """
@@ -40,17 +40,16 @@ sl_scales = [[.6900, .920, .810],  # white big
              [.0230, .023, .020]]
 """
 
-
 sl_scales2 = [[.6900, .920, 1],  # white big
-             [.6624, .874, 1],  # gray big
-             [.1100, .310, 1],  # right black
-             [.1600, .410, 1],  # left black
-             [.2100, .250, 1],  # gray center blob
-             [.0460, .046, 1],
-             [.0460, .046, 1],
-             [.0460, .046, 1],  # left small dot
-             [.0230, .023, 1],  # mid small dot
-             [.0230, .023, 1]]
+              [.6624, .874, 1],  # gray big
+              [.1100, .310, 1],  # right black
+              [.1600, .410, 1],  # left black
+              [.2100, .250, 1],  # gray center blob
+              [.0460, .046, 1],
+              [.0460, .046, 1],
+              [.0460, .046, 1],  # left small dot
+              [.0230, .023, 1],  # mid small dot
+              [.0230, .023, 1]]
 
 sl_offsets = [[0., 0., 0],
               [0., -.0184, 0],
@@ -97,15 +96,14 @@ def phantom(shape, amps, scales, offsets, angles, dtype):
     out = np.zeros(shape, dtype=dtype)
 
     z, y, x = np.mgrid[-(shape[-3] // 2):((shape[-3] + 1) // 2),
-                       -(shape[-2] // 2):((shape[-2] + 1) // 2),
-                       -(shape[-1] // 2):((shape[-1] + 1) // 2)]
+              -(shape[-2] // 2):((shape[-2] + 1) // 2),
+              -(shape[-1] // 2):((shape[-1] + 1) // 2)]
 
     coords = np.stack((x.ravel() / shape[-1] * 2,
                        y.ravel() / shape[-2] * 2,
                        z.ravel() / shape[-3] * 2))
 
     for amp, scale, offset, angle in zip(amps, scales, offsets, angles):
-
         ellipsoid(amp, scale, offset, angle, coords, out)
 
     if ndim == 2:
@@ -125,7 +123,7 @@ def ellipsoid(amp, scale, offset, angle, coords, out):
     """
     R = rotation_matrix(angle)
     coords = (np.matmul(R, coords) - np.reshape(offset, (3, 1))) / \
-        np.reshape(scale, (3, 1))
+             np.reshape(scale, (3, 1))
 
     r2 = np.sum(coords ** 2, axis=0).reshape(out.shape)
 

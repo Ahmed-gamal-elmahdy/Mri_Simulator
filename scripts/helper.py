@@ -1,6 +1,4 @@
 import math
-import threading
-import time
 
 import numpy as np
 
@@ -80,8 +78,7 @@ def reconstructImage(self):
             valueToAdd = complex(-1 * sigmaY, -1 * sigmaX)
             kSpace[i, j] = valueToAdd
 
-
-        #imgVectors = recovery(decayedRotatedMatrix, self.T1, 5)
+        imgVectors = recovery(decayedRotatedMatrix, self.T1, 5)
         decayedRotatedMatrix[:, :, 0] = 0
         decayedRotatedMatrix[:, :, 1] = 0
         # imgVectors = np.zeros((phantomSize, phantomSize, 3))

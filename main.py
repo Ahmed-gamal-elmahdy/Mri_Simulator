@@ -1,11 +1,8 @@
 import json
 import logging as log
-
 import sys
 import warnings
 
-import numpy as np
-import pyqtgraph as pg
 import qimage2ndarray
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import QPixmap, qRed
@@ -19,7 +16,6 @@ warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 
-
 class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(ApplicationWindow, self).__init__()
@@ -27,14 +23,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         # Event Listeners
+        self.ui.comboBox_seq_pulse.currentTextChanged.connect(lambda: self.sequance_changed())
+        self.ui.comboBox_prep_pulse.currentTextChanged.connect(lambda: self.prep_changed())
+
         self.ui.actionOpen.triggered.connect(lambda: self.browse())
         self.ui.actionSave_as.triggered.connect(lambda: self.save_Seq())
         self.ui.comboBox_size.currentIndexChanged.connect(lambda: self.phantomSizeChanged())
         self.ui.btn_start_sequance.clicked.connect(lambda: self.start_sequence())
-        self.ui.slider_brightness.setMinimum(100)
-        self.ui.slider_brightness.setMinimum(-100)
-        self.ui.slider_brightness.setValue(0)
-        self.ui.slider_brightness.valueChanged.connect(lambda: self.adjustBrightness())
         self.ui.comboBox_weights.currentIndexChanged.connect(lambda: self.weights())
         self.ui.label_phantom.setMouseTracking(False)
         self.ui.label_phantom.mouseDoubleClickEvent = self.highlight
@@ -49,7 +44,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.seqplot = self.ui.plotwidget_sequance
         # image
         self.img = None
-        self.brightness = self.ui.slider_brightness.value()
+        self.brightness = 1
         self.contrast = 1.0
         # initialSize = int(self.ui.comboBox_size.currentText())
         # For Mouse moving, changing Brightness and Contrast
@@ -61,9 +56,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # self.T2 = np.zeros(initialSize,initialSize)
         # Tissue Property Info Image
         self.reader = None
-        self.TR = 90
-        self.TE = 60
-        self.FA = 100
+        self.TR = 20
+        self.TE = 3
+        self.FA = 10
         # Tissue Properties
 
         self.map = {
@@ -96,8 +91,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             "Gx": 590,
         }
 
-
-
         # Set Data Ref
 
         self.seqDataRef = {
@@ -105,16 +98,19 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             "TR": 100,
             "TE": 30
         }
-
         self.prepDataRef = {
-            "FA": 90,
-            "TR": 100,
-            "TE": 30
+            "Title": "T1-Prep",
+            "FA": 180,
         }
         self.synthDataRef = {
             "FA": 90,
             "TR": 100,
             "TE": 30
+        }
+        self.customLoaded = {
+            "FA": 0,
+            "TR": 0,
+            "TE": 0
         }
         # Set sequence Synthesiser reference lines
         self.synthLineRef = {
@@ -148,17 +144,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             "FA": None
         }
 
-        #initialize plot widgets
+        # initialize plot widgets
 
-        init_plot(self,self.ui.plotwidget_sequance,self.seqLineRef,"seq")
-        init_plot(self, self.ui.plotwidget_prep, self.prepLineRef,"prep")
-        init_plot(self, self.ui.plotwidget_synth, self.synthLineRef,"seq")
+        init_plot(self.ui.plotwidget_sequance, self.seqLineRef, "seq")
+        init_plot(self.ui.plotwidget_prep, self.prepLineRef, "prep")
+        init_plot(self.ui.plotwidget_synth, self.synthLineRef, "seq")
         #
-        plot_simple_seq(self,self.seqLineRef,self.seqDataRef)
+        plot_simple_seq(self, self.seqLineRef, self.seqDataRef)
         plot_simple_seq(self, self.synthLineRef, self.synthDataRef)
         #
 
-        plot_tagging_prep(self, self.prepLineRef, self.prepDataRef)
+        plot_t1_prep(self, self.prepLineRef, self.prepDataRef)
 
         #
         self.phantomSizeChanged()
@@ -167,12 +163,21 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.spinbox_TR.valueChanged.connect(lambda: self.set_TR())
         self.ui.spinbox_TE.valueChanged.connect(lambda: self.set_TE())
 
+    def prep_changed(self):
+        sequance = self.ui.comboBox_prep_pulse.currentText()
+        if sequance == "T1 Prep.":
+            plot_t1_prep(self, self.prepLineRef, self.prepDataRef)
+        elif sequance == "T2 Prep.":
+            plot_t2_prep(self, self.prepLineRef, self.prepDataRef)
+        elif sequance == "Tagging":
+            plot_tagging_prep(self, self.prepLineRef, self.prepDataRef)
+
     def set_TR(self):
         """
         update TR line value
         """
         val = self.ui.spinbox_TR.value()
-        synthDataRef["TR"]=val
+        self.synthDataRef["TR"] = val
         self.synthLineRef["TR"].setPos(val)
 
     def set_TE(self):
@@ -180,7 +185,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update TE line value
         """
         val = self.ui.spinbox_TE.value()
-        synthDataRef["TE"] = val
+        self.synthDataRef["TE"] = val
         self.synthLineRef["TE"].setPos(val)
 
     def set_FA(self):
@@ -188,38 +193,17 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update Flip angle line value
         """
         val = self.ui.spinbox_FA.value()
-        synthDataRef["FA"] = val
-        self.synthLineRef["FA"] = val
-
+        self.synthDataRef["FA"] = val
+        self.synthLineRef["FA"].setLabel(axis="top", text=f"FA = {val}")
 
     def save_Seq(self):
         """
         Saving The Sequence as JSON File
         """
         seq = {
-            'Rf': {
-                "x": self.synthesiser_ref_line["RF"].getData()[0].tolist(),
-                "y": self.synthesiser_ref_line["RF"].getData()[1].tolist(),
-            },
-            'Gz': {
-                "x": self.synthesiser_ref_line["Gz"].getData()[0].tolist(),
-                "y": self.synthesiser_ref_line["Gz"].getData()[1].tolist(),
-            },
-            'Gy': {
-                "x": self.synthesiser_ref_line["Gy"].getData()[0].tolist(),
-                "y": self.synthesiser_ref_line["Gy"].getData()[1].tolist(),
-            },
-            'Gx': {
-                "x": self.synthesiser_ref_line["Gx"].getData()[0].tolist(),
-                "y": self.synthesiser_ref_line["Gx"].getData()[1].tolist(),
-            },
-            'Ro': {
-                "x": self.synthesiser_ref_line["Ro"].getData()[0].tolist(),
-                "y": self.synthesiser_ref_line["Ro"].getData()[1].tolist(),
-            },
-            "FA": self.synthesiser_ref_line["FA"],
-            "TR": self.synthesiser_ref_line["TR"].getPos(),
-            "TE": self.synthesiser_ref_line["TE"].getPos(),
+            "FA": self.synthDataRef["FA"],
+            "TR": self.synthDataRef["TR"],
+            "TE": self.synthDataRef["TE"],
         }
         fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Save as json", (QtCore.QDir.currentPath()),
                                                          "json (*.json)")
@@ -235,136 +219,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         opt = reconstructImage(self)
         self.setReconsImage(opt)
         self.ui.btn_start_sequance.setDisabled(False)
-
-    def plot_simple_seq(self):
-        """
-        Plot a template sequence
-        """
-        # RF
-        duration = 20
-        x = np.arange(0, duration, 0.1)
-        y = np.sinc(x - 10) * self.FA + self.GRID_OFFSET["Rf"]
-        self.synthesiser_ref_line["RF"].setData(x, y)
-        # Gz
-        duration = 20
-        x = np.array([0, duration, duration, 0, 0])
-        y = np.array([0, 0, 100, 100, 0]) + self.GRID_OFFSET["Gz"]
-        self.synthesiser_ref_line["Gz"].setData(x, y)
-        # Gx
-        duration = 10
-        x = np.array([0, duration, duration, 0, 0]) + 20
-        x = np.concatenate((x, x))
-        y = np.array([0, 0, 100, 100, 0]) + self.GRID_OFFSET["Gy"]
-        y = np.concatenate((y, np.add(y, 100)))
-        x = np.concatenate((x, np.array([0, duration, duration, 0, 0]) + 20))
-        y = np.concatenate((y, np.array([0, 0, 100, 100, 0]) + 900))
-        self.synthesiser_ref_line["Gy"].setData(x, y)
-        # Gy
-        duration = 20
-        x = np.array([0, duration, duration, 0, 0]) + 30
-        y = np.array([0, 0, 100, 100, 0]) + self.GRID_OFFSET["Gx"]
-        self.synthesiser_ref_line["Gx"].setData(x, y)
-        # readout
-        duration = 20
-        x = np.arange(0, duration, 0.1) + 50
-        y = np.random.randint(0, 360, len(x))
-        self.synthesiser_ref_line["Ro"].setData(x, y)
-        # TE
-        self.synthesiser_ref_line["TE"].setPos(60)
-        # TR
-        self.synthesiser_ref_line["TR"].setPos(90)
-
-    # Initial Sequence
-    def init_plot_sequence(self):
-        """
-        Setup limits & axes for sequence plot
-        """
-        plotwidget = self.ui.plotwidget_sequance
-        plotwidget.setYRange(-50, 2000)
-        plotwidget.addLegend(offset=(0, 1))
-        plotwidget.hideAxis("left")
-        # RF
-        pen = pg.mkPen(color=(255, 0, 0))
-        name = "RF"
-        self.sequence_ref_line["RF"] = plotwidget.plot([0, 0], pen=pen, name=name)
-        # Gz
-        pen = pg.mkPen(color=(0, 255, 0))
-        name = "Gz(SL)"
-        self.sequence_ref_line["Gz"] = plotwidget.plot([0, 0], pen=pen, name=name)
-        # Gx
-        pen = pg.mkPen(color=(255, 255, 0))
-        name = "Gx(Phase)"
-        self.sequence_ref_line["Gx"] = plotwidget.plot([0, 0], pen=pen, name=name)
-        # Gy
-        pen = pg.mkPen(color=(255, 0, 255))
-        name = "Gy(Freq)"
-        self.sequence_ref_line["Gy"] = plotwidget.plot([0, 0], pen=pen, name=name)
-        # readout
-        pen = pg.mkPen(color=(0, 255, 255))
-        name = "Readout"
-        self.sequence_ref_line["Ro"] = plotwidget.plot([0, 0], pen=pen, name=name)
-        # TR
-        pen = pg.mkPen(color=(226, 135, 67))
-        name = "TR"
-        self.sequence_ref_line["TR"] = pg.InfiniteLine(pos=200, angle=90, pen=pen, label=name, name=name)
-        plotwidget.addItem(self.sequence_ref_line["TR"])
-        # TE
-        pen = pg.mkPen(color=(128, 0, 128))
-        name = "TE"
-        self.sequence_ref_line["TE"] = pg.InfiniteLine(pos=50, angle=90, pen=pen, label=name, name=name)
-        plotwidget.addItem(self.sequence_ref_line["TE"])
-
-        # settings
-        plotwidget.setLimits(xMin=0, xMax=self.TR * 2, yMin=-50, yMax=2000)
-        p1 = plotwidget.plotItem
-        p1.setLabel('bottom', 'Time', units='s', color='g', **{'font-size': '12pt'})
-        p1.getAxis('bottom').setPen(pg.mkPen(color='g', width=3))
-
-    def init_plot_synthesiser(self):
-        """
-        Setup synthesizer axes & limits
-        """
-        plotwidget = self.ui.plotwidget_synth
-        plotwidget.setYRange(-50, 2000)
-        plotwidget.addLegend(offset=(0, 1))
-        plotwidget.hideAxis("left")
-        # RF
-        pen = pg.mkPen(color=(255, 0, 0))
-        name = "RF"
-        self.synthesiser_ref_line["RF"] = plotwidget.plot([0, 0], pen=pen, name=name)
-
-        # Gz
-        pen = pg.mkPen(color=(0, 255, 0))
-        name = "Gz(SL)"
-        self.synthesiser_ref_line["Gz"] = plotwidget.plot([0, 0], pen=pen, name=name)
-        # Gx
-        pen = pg.mkPen(color=(255, 255, 0))
-        name = "Gx(Phase)"
-        self.synthesiser_ref_line["Gx"] = plotwidget.plot([0, 0], pen=pen, name=name)
-        # Gy
-        pen = pg.mkPen(color=(255, 0, 255))
-        name = "Gy(Freq)"
-        self.synthesiser_ref_line["Gy"] = plotwidget.plot([0, 0], pen=pen, name=name)
-        # readout
-        pen = pg.mkPen(color=(0, 255, 255))
-        name = "Readout"
-        self.synthesiser_ref_line["Ro"] = plotwidget.plot([0, 0], pen=pen, name=name)
-        # TR
-        pen = pg.mkPen(color=(226, 135, 67))
-        name = "TR"
-        self.synthesiser_ref_line["TR"] = pg.InfiniteLine(pos=-60, angle=90, pen=pen, label=name, name=name)
-        plotwidget.addItem(self.synthesiser_ref_line["TR"])
-        # TE
-        pen = pg.mkPen(color=(128, 0, 128))
-        name = "TE"
-        self.synthesiser_ref_line["TE"] = pg.InfiniteLine(pos=-60, angle=90, pen=pen, label=name, name=name)
-        plotwidget.addItem(self.synthesiser_ref_line["TE"])
-
-        # settings
-        plotwidget.setLimits(xMin=0, xMax=self.TR * 2, yMin=-50, yMax=2000)
-        p1 = plotwidget.plotItem
-        p1.setLabel('bottom', 'Time', units='s', color='g', **{'font-size': '12pt'})
-        p1.getAxis('bottom').setPen(pg.mkPen(color='g', width=3))
 
     # Highlight Phantom Pixel on Click
     def highlight(self, event):
@@ -398,6 +252,38 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         paint.end()
         self.ui.label_phantom.setPixmap(canvas)
 
+    def sequance_changed(self):
+        sequance = self.ui.comboBox_seq_pulse.currentText()
+        if (sequance == "FA:90, TR: 100, TE:70"):
+            self.seqDataRef["TR"] = 100
+            self.seqDataRef["TE"] = 70
+            self.seqDataRef["FA"] = 90
+            self.seqLineRef["TR"].setPos(100)
+            self.seqLineRef["TE"].setPos(70)
+            self.seqLineRef["FA"].setLabel(axis="top", text=f"FA = {90}")
+        elif (sequance == "FA:180, TR: 100, TE:70"):
+            self.seqDataRef["TR"] = 100
+            self.seqDataRef["TE"] = 70
+            self.seqDataRef["FA"] = 180
+            self.seqLineRef["TR"].setPos(100)
+            self.seqLineRef["TE"].setPos(70)
+            self.seqLineRef["FA"].setLabel(axis="top", text=f"FA = {180}")
+        elif (sequance == "FA:120, TR: 100, TE:70"):
+            self.seqDataRef["TR"] = 100
+            self.seqDataRef["TE"] = 70
+            self.seqDataRef["FA"] = 120
+            self.seqLineRef["TR"].setPos(100)
+            self.seqLineRef["TE"].setPos(70)
+            self.seqLineRef["FA"].setLabel(axis="top", text=f"FA = {120}")
+        elif (sequance == "Custom"):
+
+            self.seqDataRef["TR"] = self.customLoaded["TR"]
+            self.seqDataRef["TE"] = self.customLoaded["TE"]
+            self.seqDataRef["FA"] = self.customLoaded["FA"]
+            self.seqLineRef["TR"].setPos(self.customLoaded["TR"])
+            self.seqLineRef["TE"].setPos(self.customLoaded["TE"])
+            self.seqLineRef["FA"].setLabel(axis="top", text=f"FA = {self.customLoaded['TE']}")
+
     #
     def browse(self):
         """
@@ -412,23 +298,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
                 with open(fileName) as user_file:
                     seq = user_file.read()
                 # Extract Sequence Data
-                seq = json.loads(seq)
-                rf = seq["Rf"]
-                gx = seq["Gx"]
-                gy = seq["Gy"]
-                gz = seq["Gz"]
-                ro = seq["Ro"]
-                self.TR = seq["TR"]
-                self.TE = seq["TE"]
-                self.FA = seq["FA"]
-                self.sequence_ref_line["RF"].setData(rf["x"], rf["y"])
-                self.sequence_ref_line["Gz"].setData(gz["x"], gz["y"])
-                self.sequence_ref_line["Gy"].setData(gy["x"], gy["y"])
-                self.sequence_ref_line["Gx"].setData(gx["x"], gx["y"])
-                self.sequence_ref_line["Ro"].setData(ro["x"], ro["y"])
-                self.sequence_ref_line["TR"].setPos(self.TR)
-                self.sequence_ref_line["TE"].setPos(self.TE)
-
+                self.customLoaded = json.loads(seq)
+                self.ui.comboBox_seq_pulse.setCurrentIndex(3)
             except (IOError, SyntaxError):
                 self.error_dialog.showMessage("Only json supported")
 
@@ -437,16 +308,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         Change Phantom With new Size
         """
         size = int(self.ui.comboBox_size.currentText())
-        self.T1 = np.zeros((size,size))
-        self.T2 = np.zeros((size,size))
+        self.T1 = np.zeros((size, size))
+        self.T2 = np.zeros((size, size))
         self.setPhantomImage(getPhantom(size))
         self.getProperties()
         self.phantom_ndarray = getPhantom(size)
         # rebuild phantom with the new size
         self.oimg = getPhantom(size)
         self.reader = qimage2ndarray.array2qimage(getPhantom(size))
-        self.ui.slider_brightness.setValue(0)
-        self.ui.lable_brightness.setText('0')
+
         self.weights()
 
     def setPhantomImage(self, img):
@@ -463,13 +333,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         :param img: 2d array
         """
         self.recons_img = qimage2ndarray.array2qimage(img)
-
-        if(self.ui.comboBox_viewer.currentIndex() == 0):
+        if self.ui.comboBox_viewer.currentIndex() == 0:
             self.ui.label_img1.setPixmap(QPixmap(self.recons_img))
         else:
             self.ui.label_img2.setPixmap(QPixmap(self.recons_img))
-
-
 
     def setKspaceimg(self, img):
         """
@@ -490,7 +357,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.ui.label_kspace1.setPixmap(QPixmap(self.kspace_img))
         else:
             self.ui.label_kspace2.setPixmap(QPixmap(self.kspace_img))
-
 
     def getColors(self):
         """
@@ -561,8 +427,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         """
         weight = self.ui.comboBox_weights.currentText()
-        self.ui.slider_brightness.setValue(0)
-        self.ui.lable_brightness.setText('0')
         # clear old weights
         self.setPhantomImage(self.oimg)
         imageData = self.getColors()
@@ -583,20 +447,20 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         pixelData = qRed(self.reader.pixel(self.x, self.y))
         # get property from map and update corresponding widget
         if pixelData == 255:
-            self.ui.label_T1.setText(self.map['fat']['t1']+"ms")
-            self.ui.label_T2.setText(self.map['fat']['t2']+"ms")
+            self.ui.label_T1.setText(self.map['fat']['t1'] + "ms")
+            self.ui.label_T2.setText(self.map['fat']['t2'] + "ms")
             self.ui.label_PD.setText(self.map['fat']['pd'])
         elif pixelData == 101 or pixelData == 76 or pixelData == 25:
-            self.ui.label_T1.setText(self.map['muscle']['t1']+"ms")
-            self.ui.label_T2.setText(self.map['muscle']['t2']+"ms")
+            self.ui.label_T1.setText(self.map['muscle']['t1'] + "ms")
+            self.ui.label_T2.setText(self.map['muscle']['t2'] + "ms")
             self.ui.label_PD.setText(self.map['muscle']['pd'])
         elif pixelData == 50:
-            self.ui.label_T1.setText(self.map['grayMatter']['t1']+"ms")
-            self.ui.label_T2.setText(self.map['grayMatter']['t2']+"ms")
+            self.ui.label_T1.setText(self.map['grayMatter']['t1'] + "ms")
+            self.ui.label_T2.setText(self.map['grayMatter']['t2'] + "ms")
             self.ui.label_PD.setText(self.map['grayMatter']['pd'])
         else:
-            self.ui.label_T1.setText(self.map['csf']['t1']+"ms")
-            self.ui.label_T2.setText(self.map['csf']['t2']+"ms")
+            self.ui.label_T1.setText(self.map['csf']['t1'] + "ms")
+            self.ui.label_T2.setText(self.map['csf']['t2'] + "ms")
             self.ui.label_PD.setText(self.map['csf']['pd'])
 
     def getProperties(self):
