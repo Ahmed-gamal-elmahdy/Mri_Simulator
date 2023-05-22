@@ -1,6 +1,4 @@
 import math
-import threading
-import time
 
 import numpy as np
 
@@ -46,31 +44,15 @@ def gradientXY(self, matrix, stepY, stepX):
 
 
 def reconstructImage(self):
-    # self.T2 = np.float64(np.abs(np.add(self.getColors(), -255)))
-    # self.T1 = np.float64(self.oimg)
-    # mask = (self.T2 == 0)
-    # self.T2[mask] = 1e-14
-    # mask = (self.T1 < 1e-6)
-    # self.T1[mask] = 1e-14
     shape = np.shape(self.weighted)
     phantomSize = shape[0]
-    # row = math.floor(np.shape(self.oimg)[0] / 3)
-    # col = np.shape(self.oimg)[1]
-    # self.T1 = np.zeros([row, col])
-    # self.T2 = np.zeros([row, col])
-    # self.T1 = self.oimg[row:2 * row]
-    # self.T2 = self.oimg[2 * row:3 * row + 1]
-    # mask = (self.T2 < 1e-6)
-    # self.T2[mask] = 1e-6
-    # mask = (self.T1 < 1e-6)
-    # self.T1[mask] = 1e-6
     kSpace = np.zeros((phantomSize, phantomSize), dtype=complex)
     imgVectors = np.zeros((phantomSize, phantomSize, 3))
     imgVectors[:, :, 2] = self.weighted
 
     for i in range(0, phantomSize):
         rotatedMat = rotationX(self, imgVectors)
-        decayedRotatedMatrix = decay(rotatedMat, self.T2, 0)
+        decayedRotatedMatrix = decay(rotatedMat, self.T2, self.TE)
         for j in range(0, phantomSize):
             stepX = (360 / phantomSize) * i
             stepY = (360 / phantomSize) * j
@@ -80,11 +62,9 @@ def reconstructImage(self):
             valueToAdd = complex(-1 * sigmaY, -1 * sigmaX)
             kSpace[i, j] = valueToAdd
 
-        imgVectors = recovery(decayedRotatedMatrix, self.T1, 5)
+        imgVectors = recovery(decayedRotatedMatrix, self.T1, self.TR)
         decayedRotatedMatrix[:, :, 0] = 0
         decayedRotatedMatrix[:, :, 1] = 0
-        # imgVectors = np.zeros((phantomSize, phantomSize, 3))
-        # imgVectors[:, :, 2] = self.phantom_ndarray
         self.setKspaceimg(kSpace)
 
     reconstructedImg = np.fft.ifft2(kSpace)

@@ -1,6 +1,5 @@
 import json
 import logging as log
-
 import sys
 import warnings
 
@@ -10,12 +9,12 @@ import qimage2ndarray
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import QPixmap, qRed
 from qt_material import apply_stylesheet
+
 from gui import Ui_MainWindow
 from scripts.helper import getPhantom, reconstructImage
 
 warnings.filterwarnings("error")
 log.basicConfig(filename='mainLogs.log', filemode='w', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
-
 
 
 class ApplicationWindow(QtWidgets.QMainWindow):
@@ -37,6 +36,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.label_phantom.setMouseTracking(False)
         self.ui.label_phantom.mouseDoubleClickEvent = self.highlight
         self.ui.label_phantom.mouseMoveEvent = self.adjustContrastAndBrightness
+        self.ui.spinbox_FA.setValue(10)
+        self.ui.spinbox_TE.setValue(10)
+        self.ui.spinbox_TR.setValue(1000)
+        self.ui.spinbox_FA.setMaximum(180)
+        self.ui.spinbox_FA.setSingleStep(10)
+        self.ui.spinbox_TE.setSingleStep(5)
+        self.ui.spinbox_TR.setSingleStep(50)
         pg.setConfigOptions(antialias=True)
         self.ui.label_phantom.setScaledContents(True)
 
@@ -49,19 +55,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.img = None
         self.brightness = self.ui.slider_brightness.value()
         self.contrast = 1.0
-        # initialSize = int(self.ui.comboBox_size.currentText())
-        # For Mouse moving, changing Brightness and Contrast
         self.oldY = None
         self.oldX = None
         # Tissue Property Weighted Image
         self.weighted = None
-        # self.T1 = np.zeros(initialSize,initialSize)
-        # self.T2 = np.zeros(initialSize,initialSize)
         # Tissue Property Info Image
         self.reader = None
-        self.TR = 90
-        self.TE = 60
-        self.FA = 90
+        self.TR = 1000
+        self.TE = 10
+        self.FA = 10
 
         # Tissue Properties
 
@@ -131,6 +133,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update TR line value
         """
         val = self.ui.spinbox_TR.value()
+        self.TR = val
         self.synthesiser_ref_line["TR"].setPos(val)
 
     def set_TE(self):
@@ -138,6 +141,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update TE line value
         """
         val = self.ui.spinbox_TE.value()
+        self.TE = val
         self.synthesiser_ref_line["TE"].setPos(val)
 
     def set_FA(self):
@@ -145,6 +149,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update Flip angle line value
         """
         val = self.ui.spinbox_FA.value()
+        self.FA = val
         self.synthesiser_ref_line["FA"] = val
         print(self.synthesiser_ref_line["FA"])
 
@@ -393,8 +398,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         Change Phantom With new Size
         """
         size = int(self.ui.comboBox_size.currentText())
-        self.T1 = np.zeros((size,size))
-        self.T2 = np.zeros((size,size))
+        self.T1 = np.zeros((size, size))
+        self.T2 = np.zeros((size, size))
         self.setPhantomImage(getPhantom(size))
         self.getProperties()
         self.phantom_ndarray = getPhantom(size)
@@ -513,12 +518,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         imageData = self.getColors()
         # get Weighted phantom
         if weight == 'T2':
+            self.FA = 12
+            self.ui.spinbox_FA.setValue(12)
             self.weighted = np.abs(np.add(imageData, -255))
             self.setPhantomImage(self.weighted)
         elif weight == 'PD':
+            self.ui.spinbox_FA.setValue(12)
+            self.FA = 12
             self.weighted = np.abs(np.multiply(np.add(imageData, -255), 0.5))
             self.setPhantomImage(self.weighted)
         else:
+            self.ui.spinbox_FA.setValue(28)
+            self.FA = 28
             self.weighted = self.oimg
 
     def getInfo(self):
@@ -528,20 +539,20 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         pixelData = qRed(self.reader.pixel(self.x, self.y))
         # get property from map and update corresponding widget
         if pixelData == 255:
-            self.ui.label_T1.setText(self.map['fat']['t1']+"ms")
-            self.ui.label_T2.setText(self.map['fat']['t2']+"ms")
+            self.ui.label_T1.setText(self.map['fat']['t1'] + "ms")
+            self.ui.label_T2.setText(self.map['fat']['t2'] + "ms")
             self.ui.label_PD.setText(self.map['fat']['pd'])
         elif pixelData == 101 or pixelData == 76 or pixelData == 25:
-            self.ui.label_T1.setText(self.map['muscle']['t1']+"ms")
-            self.ui.label_T2.setText(self.map['muscle']['t2']+"ms")
+            self.ui.label_T1.setText(self.map['muscle']['t1'] + "ms")
+            self.ui.label_T2.setText(self.map['muscle']['t2'] + "ms")
             self.ui.label_PD.setText(self.map['muscle']['pd'])
         elif pixelData == 50:
-            self.ui.label_T1.setText(self.map['grayMatter']['t1']+"ms")
-            self.ui.label_T2.setText(self.map['grayMatter']['t2']+"ms")
+            self.ui.label_T1.setText(self.map['grayMatter']['t1'] + "ms")
+            self.ui.label_T2.setText(self.map['grayMatter']['t2'] + "ms")
             self.ui.label_PD.setText(self.map['grayMatter']['pd'])
         else:
-            self.ui.label_T1.setText(self.map['csf']['t1']+"ms")
-            self.ui.label_T2.setText(self.map['csf']['t2']+"ms")
+            self.ui.label_T1.setText(self.map['csf']['t1'] + "ms")
+            self.ui.label_T2.setText(self.map['csf']['t2'] + "ms")
             self.ui.label_PD.setText(self.map['csf']['pd'])
 
     def getProperties(self):
