@@ -34,6 +34,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.ui.label_phantom.setMouseTracking(False)
         self.ui.label_phantom.mouseDoubleClickEvent = self.highlight
         self.ui.label_phantom.mouseMoveEvent = self.adjustContrastAndBrightness
+        self.ui.spinbox_FA.setValue(10)
+        self.ui.spinbox_TE.setValue(10)
+        self.ui.spinbox_TR.setValue(1000)
+        self.ui.spinbox_FA.setMaximum(180)
+        self.ui.spinbox_FA.setSingleStep(10)
+        self.ui.spinbox_TE.setSingleStep(5)
+        self.ui.spinbox_TR.setSingleStep(50)
         pg.setConfigOptions(antialias=True)
         self.ui.label_phantom.setScaledContents(True)
 
@@ -46,19 +53,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.img = None
         self.brightness = 1
         self.contrast = 1.0
-        # initialSize = int(self.ui.comboBox_size.currentText())
-        # For Mouse moving, changing Brightness and Contrast
         self.oldY = None
         self.oldX = None
         # Tissue Property Weighted Image
         self.weighted = None
-        # self.T1 = np.zeros(initialSize,initialSize)
-        # self.T2 = np.zeros(initialSize,initialSize)
         # Tissue Property Info Image
         self.reader = None
-        self.TR = 20
-        self.TE = 3
+
+        self.TR = 1000
+        self.TE = 10
         self.FA = 10
+
+
         # Tissue Properties
 
         self.map = {
@@ -177,24 +183,30 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         update TR line value
         """
         val = self.ui.spinbox_TR.value()
+
         self.synthDataRef["TR"] = val
         self.synthLineRef["TR"].setPos(val)
+
 
     def set_TE(self):
         """
         update TE line value
         """
         val = self.ui.spinbox_TE.value()
+
         self.synthDataRef["TE"] = val
         self.synthLineRef["TE"].setPos(val)
+
 
     def set_FA(self):
         """
         update Flip angle line value
         """
         val = self.ui.spinbox_FA.value()
+
         self.synthDataRef["FA"] = val
         self.synthLineRef["FA"].setLabel(axis="top", text=f"FA = {val}")
+
 
     def save_Seq(self):
         """
@@ -432,12 +444,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         imageData = self.getColors()
         # get Weighted phantom
         if weight == 'T2':
+            self.FA = 12
+            self.ui.spinbox_FA.setValue(12)
             self.weighted = np.abs(np.add(imageData, -255))
             self.setPhantomImage(self.weighted)
         elif weight == 'PD':
+            self.ui.spinbox_FA.setValue(12)
+            self.FA = 12
             self.weighted = np.abs(np.multiply(np.add(imageData, -255), 0.5))
             self.setPhantomImage(self.weighted)
         else:
+            self.ui.spinbox_FA.setValue(28)
+            self.FA = 28
             self.weighted = self.oimg
 
     def getInfo(self):
