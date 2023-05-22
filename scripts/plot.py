@@ -56,18 +56,19 @@ def plot_simple_seq(self, lineRef, dataRef):
     """
     Plot a template sequence
     """
+    scale=1
     # RF
-    duration = 20
+    duration = 20*scale
     x = np.arange(0, duration, 0.1)
-    y = np.sinc(x - 10) * self.FA + self.GRID_OFFSET["Rf"]
+    y = np.sinc(x - 10) * 90 + self.GRID_OFFSET["Rf"]
     lineRef["RF"].setData(x, y)
     # Gz
-    duration = 20
+    duration = 20*scale
     x = np.array([0, duration, duration, 0, 0])
     y = np.array([0, 0, 100, 100, 0]) + self.GRID_OFFSET["Gz"]
     lineRef["Gz"].setData(x, y)
     # Gy
-    duration = 10
+    duration = 10*scale
     x = np.array([0, duration, duration, 0, 0]) + 20
     x = np.concatenate((x, x))
     y = np.array([0, 0, 100, 100, 0]) + self.GRID_OFFSET["Gy"]
@@ -76,12 +77,12 @@ def plot_simple_seq(self, lineRef, dataRef):
     y = np.concatenate((y, np.array([0, 0, 100, 100, 0]) + 900))
     lineRef["Gy"].setData(x, y)
     # Gy
-    duration = 20
+    duration = 20*scale
     x = np.array([0, duration, duration, 0, 0]) + 30
     y = np.array([0, 0, 100, 100, 0]) + self.GRID_OFFSET["Gx"]
     lineRef["Gx"].setData(x, y)
     # readout
-    duration = 20
+    duration = 20*scale
     x = np.arange(0, duration, 0.1) + 50
     y = np.random.randint(0, 360, len(x))
     lineRef["Ro"].setData(x, y)
