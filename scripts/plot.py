@@ -1,57 +1,8 @@
 import numpy as np
 import pyqtgraph as pg
 
-seqDataRef = {
-    "FA": 90,
-    "TR": 100,
-    "TE": 30
-}
 
-prepDataRef = {
-    "FA": 90,
-    "TR": 100,
-    "TE": 30
-}
-synthDataRef = {
-    "FA": 90,
-    "TR": 100,
-    "TE": 30
-}
-
-synthLineRef = {
-    "RF": pg.PlotItem,
-    "Gz": pg.PlotItem,
-    "Gy": pg.PlotItem,
-    "Gx": pg.PlotItem,
-    "Ro": pg.PlotItem,
-    "TR": pg.InfiniteLine,
-    "TE": pg.InfiniteLine,
-    "FA": pg.PlotItem,
-}
-seqLineRef = {
-    "RF": pg.PlotItem,
-    "Gz": pg.PlotItem,
-    "Gy": pg.PlotItem,
-    "Gx": pg.PlotItem,
-    "Ro": pg.PlotItem,
-    "TR": pg.InfiniteLine,
-    "TE": pg.InfiniteLine,
-    "FA": pg.PlotItem,
-}
-prepLineRef = {
-    "RF": pg.PlotItem,
-    "Gz": pg.PlotItem,
-    "Gy": pg.PlotItem,
-    "Gx": pg.PlotItem,
-    "Ro": pg.PlotItem,
-    "TR": pg.InfiniteLine,
-    "TE": pg.InfiniteLine,
-    "FA": pg.PlotItem,
-}
-
-
-
-def init_plot(self, plotWidget, lineRef,pulseType):
+def init_plot(plotWidget, lineRef, pulseType):
     """
     Setup limits & axes for plot
     """
@@ -78,7 +29,7 @@ def init_plot(self, plotWidget, lineRef,pulseType):
     pen = pg.mkPen(color=(0, 255, 255))
     name = "Readout"
     lineRef["Ro"] = plotWidget.plot([0, 0], pen=pen, name=name)
-    if(pulseType != "prep"):
+    if (pulseType != "prep"):
         # TR
         pen = pg.mkPen(color=(226, 135, 67))
         name = "TR"
@@ -99,7 +50,6 @@ def init_plot(self, plotWidget, lineRef,pulseType):
     lineRef["FA"] = plotWidget.plotItem
     lineRef["FA"].setLabel('top', 'FA = ', color='g', **{'font-size': '12pt'})
     lineRef["FA"].getAxis('top').setPen(pg.mkPen(color='r', width=3))
-
 
 
 def plot_simple_seq(self, lineRef, dataRef):
@@ -143,44 +93,49 @@ def plot_simple_seq(self, lineRef, dataRef):
     dataRef["TR"] = 90
 
 
-def plot_t1_prep(self,lineRef,dataRef):
+def plot_t1_prep(self, lineRef, dataRef):
+    dataRef["Title"] = "T1-Prep"
     dataRef["FA"] = 180
     # RF
     duration = 20
     x = np.arange(0, duration, 0.1)
     y = np.sinc(x - 10) * dataRef["FA"] + self.GRID_OFFSET["Rf"]
     lineRef["RF"].setData(x, y)
-    lineRef["FA"].setLabel(axis="top",text="FA = 180")
+    lineRef["FA"].setLabel(axis="top", text="FA = 180")
+    lineRef["Gx"].setData([], [])
 
 
-def plot_t2_prep(self,lineRef,dataRef):
-    dataRef["FA"] = [90,-90]
+def plot_t2_prep(self, lineRef, dataRef):
+    dataRef["Title"] = "T2-Prep"
+    dataRef["FA"] = [90, -90]
     # RF
     duration = 20
     x1 = np.arange(0, duration, 0.1)
     y1 = np.sinc(x1 - 10) * 90 + self.GRID_OFFSET["Rf"]
     x2 = np.arange(0, duration, 0.1)
     y2 = np.sinc(x2 - 10) * -90 + self.GRID_OFFSET["Rf"]
-    x2 = np.add(x2,10+duration)
-    x=np.concatenate((x1,x2))
-    y=np.concatenate((y1,y2))
+    x2 = np.add(x2, 10 + duration)
+    x = np.concatenate((x1, x2))
+    y = np.concatenate((y1, y2))
     lineRef["RF"].setData(x, y)
-    lineRef["FA"].setLabel(axis="top",text="FA = 90,-90")
+    lineRef["FA"].setLabel(axis="top", text="FA = 90,-90")
+    lineRef["Gx"].setData([], [])
 
 
-def plot_tagging_prep(self,lineRef,dataRef):
-    dataRef["FA"] = [90,-90]
+def plot_tagging_prep(self, lineRef, dataRef):
+    dataRef["Title"] = "Tagging-Prep"
+    dataRef["FA"] = [90, -90]
     # RF
     duration = 20
     x1 = np.arange(0, duration, 0.1)
     y1 = np.sinc(x1 - 10) * 90 + self.GRID_OFFSET["Rf"]
     x2 = np.arange(0, duration, 0.1)
     y2 = np.sinc(x2 - 10) * -90 + self.GRID_OFFSET["Rf"]
-    x2 = np.add(x2,10+duration)
-    x=np.concatenate((x1,x2))
-    y=np.concatenate((y1,y2))
+    x2 = np.add(x2, 10 + duration)
+    x = np.concatenate((x1, x2))
+    y = np.concatenate((y1, y2))
     lineRef["RF"].setData(x, y)
-    lineRef["FA"].setLabel(axis="top",text="FA = 90,-90")
+    lineRef["FA"].setLabel(axis="top", text="FA = 90,-90")
 
     # Gy
     duration = 10

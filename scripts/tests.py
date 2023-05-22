@@ -1,18 +1,19 @@
-
 import math
 
-import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 import modifiedPhantom
 
-
 size = 20
+
+
 def getPhantom(size):
-    size=int(size)
-    phantom= modifiedPhantom.modshepp_logan([size, size], dtype=float)
+    size = int(size)
+    phantom = modifiedPhantom.modshepp_logan([size, size], dtype=float)
     phantom = phantom * (255 / np.max(phantom))
     return phantom
+
 
 #
 # def rotateX(matrix, angle , ):
@@ -60,7 +61,7 @@ def rotateX(matrix, cosFA, sinFA):
     shape = np.shape(matrix)
     rows = shape[0]
     cols = shape[1]
-    #angle = (angle) * (pi / 180)
+    # angle = (angle) * (pi / 180)
     newMatrix = np.zeros(shape)
     for i in range(0, rows):
         for j in range(0, cols):
@@ -78,7 +79,9 @@ def rotateZ(matrix, angle):
     for i in range(0, rows):
         for j in range(0, cols):
             newMatrix[i, j] = np.dot(
-                np.array([[math.cos(angle), -1 * math.sin(angle), 0], [math.sin(angle), math.cos(angle), 0], [0, 0, 1]]), matrix[i, j])
+                np.array(
+                    [[math.cos(angle), -1 * math.sin(angle), 0], [math.sin(angle), math.cos(angle), 0], [0, 0, 1]]),
+                matrix[i, j])
     return newMatrix
 
 
@@ -92,7 +95,9 @@ def gradientXY(matrix, stepY, stepX):
             angle = stepY * j + stepX * i
             angle = (angle) * (math.pi / 180)
             newMatrix[i, j] = np.dot(
-                np.array([[math.cos(angle), -1 * math.sin(angle), 0], [math.sin(angle), math.cos(angle), 0], [0, 0, 1]]), matrix[i, j])
+                np.array(
+                    [[math.cos(angle), -1 * math.sin(angle), 0], [math.sin(angle), math.cos(angle), 0], [0, 0, 1]]),
+                matrix[i, j])
     return newMatrix
 
 
@@ -104,29 +109,27 @@ def reconstructImage():
 
     for i in range(0, size):
         rotatedMatrix = rotateX(vectors, math.cos(angle), math.sin(angle))
-        #T2 ,  TE
-       # decayedRotatedMatrix = decay(rotatedMatrix, self.T2, self.TE)
-
+        # T2 ,  TE
+        # decayedRotatedMatrix = decay(rotatedMatrix, self.T2, self.TE)
 
         for j in range(0, size):
             stepX = (360 / size) * i
             stepY = (360 / size) * j
-           # phaseEncodedMatrix = gradientXY(decayedRotatedMatrix, stepY, stepX)
+            # phaseEncodedMatrix = gradientXY(decayedRotatedMatrix, stepY, stepX)
             phaseEncodedMatrix = gradientXY(rotatedMatrix, stepY, stepX)
-            sigmaX = np.round(np.sum(phaseEncodedMatrix[:, :, 0]) , 3)
-            sigmaY = np.round(np.sum(phaseEncodedMatrix[:, :, 1]) , 3)
+            sigmaX = np.round(np.sum(phaseEncodedMatrix[:, :, 0]), 3)
+            sigmaY = np.round(np.sum(phaseEncodedMatrix[:, :, 1]), 3)
             valueToAdd = complex(sigmaY, sigmaX)
             kSpace[i, j] = valueToAdd
-# T1 , TR
-       # vectors = recovery(decayedRotatedMatrix, self.T1, self.TR)
-       # decayedRotatedMatrix[:, :, 0] = 0
-       # decayedRotatedMatrix[:, :, 1] = 0
+        # T1 , TR
+        # vectors = recovery(decayedRotatedMatrix, self.T1, self.TR)
+        # decayedRotatedMatrix[:, :, 0] = 0
+        # decayedRotatedMatrix[:, :, 1] = 0
         rotatedMatrix[:, :, 0] = 0
         rotatedMatrix[:, :, 1] = 0
         vectors = np.zeros((size, size, 3))
         vectors[:, :, 2] = test
-       # self.showKSpace(kSpace)
-
+    # self.showKSpace(kSpace)
 
     # kSpace = np.fft.fftshift(kSpace)
     # kSpace = np.fft.fft2(kSpace)
@@ -139,11 +142,12 @@ def reconstructImage():
     # print(kSpace)
 
     kSpace = np.fft.ifft2(kSpace)
-    ks = np.round(np.abs(kSpace),3)
+    ks = np.round(np.abs(kSpace), 3)
     # plt.plot(kSpace.real)
     # plt.show()
-   # print(kSpace)
+    # print(kSpace)
     return ks
+
 
 def decay(matrix, T2, t=1):
     rows = matrix.shape[0]
@@ -156,6 +160,7 @@ def decay(matrix, T2, t=1):
                             [0, 0, 1]])
             decayedMat[i, j] = exp.dot(matrix[i][j])
     return decayedMat
+
 
 def recovery(matrix, T1, t=1):
     rows = matrix.shape[0]
@@ -171,22 +176,20 @@ def recovery(matrix, T1, t=1):
 
 
 test = getPhantom(size)
-#plt.plot(test)
+# plt.plot(test)
 four = np.fft.fft2(test)
 plt.show()
 # print(four)
 k = reconstructImage()
-k = k/np.max(k) * 255
-print(np.round(test,4))
+k = k / np.max(k) * 255
+print(np.round(test, 4))
 print()
 print("hi")
 print(k)
 
-plt.subplot(2,1,1)
+plt.subplot(2, 1, 1)
 plt.plot(test)
-plt.subplot(2,1,2)
+plt.subplot(2, 1, 2)
 plt.plot(k)
 plt.show()
 # cv2.imwrite('k.png',k)
-
-
