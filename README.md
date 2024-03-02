@@ -1,4 +1,4 @@
-# Mri Simulator
+# MRI Simulator
 
 ## Description
 
